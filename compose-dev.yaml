@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    restart: unless-stopped
+    # networks:
+    #   - network-db
+    ports:
+      - 5432:5432
+    volumes:
+      - ./postgresql/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-notifi}
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      TZ: Pacific/Auckland
+
+  
+
+# networks:
+#   network-db:
+#     external: false    
+    
