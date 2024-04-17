@@ -27,7 +27,7 @@ jobs:
         run: go mod download
 
       - name: Build Api Binary
-        run: go build -o api cmd/api/
+        run: go build -o api ./cmd/api/
 
       - name: Run Tests
         run: go test ./... -v
