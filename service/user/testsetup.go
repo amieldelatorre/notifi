@@ -63,7 +63,7 @@ func GetValidTestGetUserByIdTestCases() []TestGetUserByIdTestCase {
 	for _, u := range GetTestUsers() {
 		tc := TestGetUserByIdTestCase{
 			ExpectedStatusCode: http.StatusOK,
-			Response:           GetUserResponse{Success: true, User: &u, Errors: map[string]string{}},
+			Response:           GetUserResponse{User: &u, Errors: map[string]string{}},
 			UserId:             u.Id,
 		}
 		testCases = append(testCases, tc)
@@ -74,7 +74,7 @@ func GetValidTestGetUserByIdTestCases() []TestGetUserByIdTestCase {
 func GetInvalidTestGetUserByIdTestCase() TestGetUserByIdTestCase {
 	return TestGetUserByIdTestCase{
 		ExpectedStatusCode: http.StatusNotFound,
-		Response:           GetUserResponse{Success: false, Errors: map[string]string{"user": "User not found"}},
+		Response:           GetUserResponse{Errors: map[string]string{"user": "User not found"}},
 		UserId:             100,
 	}
 }

@@ -15,9 +15,6 @@ func TestGetUserById(t *testing.T) {
 
 	for _, tc := range testCases {
 		actualStatusCode, actualResponse := service.GetUserById(context.Background(), tc.UserId)
-		if actualResponse.Success != tc.Response.Success {
-			t.Fatalf("test case userId %d, expected response success %t, got %t", tc.UserId, tc.Response.Success, actualResponse.Success)
-		}
 
 		if actualStatusCode != tc.ExpectedStatusCode {
 			t.Fatalf("test case userId %d, expected exected status code %d, got %d", tc.UserId, tc.ExpectedStatusCode, actualStatusCode)

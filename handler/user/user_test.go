@@ -66,10 +66,6 @@ func TestGetUser(t *testing.T) {
 			t.Error(err)
 		}
 
-		if getUserResponse.Success != tc.Response.Success {
-			t.Fatalf("test case userId %d, expected response success %t, got %t", tc.UserId, tc.Response.Success, getUserResponse.Success)
-		}
-
 		// Check if both are length of 0 as userHandler.getUser does omits the Errors if it is empty
 		if len(getUserResponse.Errors) != 0 && len(tc.Response.Errors) != 0 && !reflect.DeepEqual(getUserResponse.Errors, tc.Response.Errors) {
 			t.Fatalf("test case userId %d, expected response errors %+v, got %+v", tc.UserId, tc.Response.Errors, getUserResponse.Errors)

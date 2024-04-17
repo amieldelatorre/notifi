@@ -11,9 +11,8 @@ import (
 )
 
 type GetUserResponse struct {
-	Success bool              `json:"success"`
-	User    *model.User       `json:"user,omitempty"`
-	Errors  map[string]string `json:"errors,omitempty"`
+	User   *model.User       `json:"user,omitempty"`
+	Errors map[string]string `json:"errors,omitempty"`
 }
 
 type Service struct {
@@ -26,8 +25,7 @@ func New(provider userProvider.UserProvider) Service {
 
 func (service *Service) GetUserById(ctx context.Context, id int) (int, GetUserResponse) {
 	response := GetUserResponse{
-		Success: false,
-		Errors:  make(map[string]string),
+		Errors: make(map[string]string),
 	}
 
 	user, err := service.Provider.GetUserById(ctx, id)
@@ -39,7 +37,6 @@ func (service *Service) GetUserById(ctx context.Context, id int) (int, GetUserRe
 		return http.StatusNotFound, response
 	}
 
-	response.Success = true
 	response.User = &user
 
 	return http.StatusOK, response
