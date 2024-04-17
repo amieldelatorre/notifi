@@ -1,14 +1,11 @@
 package user // import "github.com/amieldelatorre/notifi/handler/user"
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 
 	userService "github.com/amieldelatorre/notifi/service/user"
-	"github.com/jackc/pgx/v5"
 )
 
 type UserHandler struct {
@@ -45,17 +42,9 @@ func (h UserHandler) getUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.Service.GetUserById(context.Background(), userId)
-	if err != nil && errors.Is(err, pgx.ErrNoRows) {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	} else if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	statusCode, response := h.Service.GetUserById(r.Context(), userId)
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h UserHandler) putUser(w http.ResponseWriter, r *http.Request) {
