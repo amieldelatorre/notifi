@@ -10,12 +10,12 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/amieldelatorre/notifi/logger"
 	userService "github.com/amieldelatorre/notifi/service/user"
-	"github.com/amieldelatorre/notifi/utils"
 )
 
 func GetNewMockUserHandler() UserHandler {
-	logger := utils.GetLogger(io.Discard, slog.LevelWarn)
+	logger := logger.New(io.Discard, slog.LevelWarn)
 	mockUserProvider := userService.NewMockUserRepo()
 	service := userService.New(&mockUserProvider)
 	mockUserHandler := New(logger, service)

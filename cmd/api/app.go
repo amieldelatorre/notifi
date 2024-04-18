@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/amieldelatorre/notifi/common"
+	"github.com/amieldelatorre/notifi/logger"
 	"github.com/amieldelatorre/notifi/utils"
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -21,7 +22,7 @@ type Application struct {
 }
 
 func NewApp() Application {
-	logger := utils.GetLogger(os.Stdout, slog.LevelInfo)
+	logger := logger.New(os.Stdout, slog.LevelDebug)
 	ut := utils.Util{Logger: logger}
 
 	logger.Info("Gathering requirements for application")

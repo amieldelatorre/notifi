@@ -10,10 +10,12 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/amieldelatorre/notifi/logger"
 )
 
 func GetUtil() Util {
-	logger := GetLogger(io.Discard, slog.LevelWarn)
+	logger := logger.New(io.Discard, slog.LevelWarn)
 	return Util{Logger: logger}
 }
 
