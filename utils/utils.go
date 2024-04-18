@@ -3,9 +3,8 @@ package utils // import "github.com/amieldelatorre/notifi/utils"
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
-
-	"github.com/amieldelatorre/notifi/logger"
 )
 
 const (
@@ -25,7 +24,7 @@ type RequiredEnvVariables struct {
 }
 
 type Util struct {
-	Logger *logger.Logger
+	Logger *slog.Logger
 }
 
 func (ut *Util) GetRequiredEnvVariables() (RequiredEnvVariables, error) {
@@ -74,11 +73,11 @@ func (ut *Util) GetRequiredEnvVariables() (RequiredEnvVariables, error) {
 }
 
 func (ut *Util) GetRequiredEnvVariable(varName string) (string, error) {
-	ut.Logger.Debug("Getting required environment variable '%s'", varName)
+	ut.Logger.Debug(fmt.Sprintf("Getting required environment variable '%s'", varName))
 	value := os.Getenv(varName)
 
 	if value == "" {
-		ut.Logger.Debug("Required environment variable '%s'", varName)
+		ut.Logger.Debug(fmt.Sprintf("Required environment variable '%s'", varName))
 		err_msg := fmt.Sprintf("ERROR: environment variable '%s' cannot be blank or empty", varName)
 		return "", errors.New(err_msg)
 	}

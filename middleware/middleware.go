@@ -1,11 +1,13 @@
 package middleware
 
-import "github.com/amieldelatorre/notifi/logger"
+import (
+	"log/slog"
+)
 
 type Middleware struct {
-	Logger *logger.Logger
+	Logger *slog.Logger
 }
 
-func New(logger *logger.Logger) Middleware {
+func New(logger *slog.Logger) Middleware {
 	return Middleware{Logger: logger}
 }

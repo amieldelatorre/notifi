@@ -17,7 +17,7 @@ func (m *Middleware) AddRequestId(next http.Handler) http.Handler {
 			return
 		}
 
-		m.Logger.Debug("Request id '%s' generated", id)
+		m.Logger.Debug("Request id generated and added to context", "requestId", id.String())
 
 		ctx := context.WithValue(r.Context(), RequestIdName, id.String())
 

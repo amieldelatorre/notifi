@@ -2,20 +2,20 @@ package user // import "github.com/amieldelatorre/notifi/handler/user"
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 
-	"github.com/amieldelatorre/notifi/logger"
 	"github.com/amieldelatorre/notifi/middleware"
 	userService "github.com/amieldelatorre/notifi/service/user"
 )
 
 type UserHandler struct {
-	Logger  *logger.Logger
+	Logger  *slog.Logger
 	Service userService.Service
 }
 
-func New(logger *logger.Logger, service userService.Service) UserHandler {
+func New(logger *slog.Logger, service userService.Service) UserHandler {
 	return UserHandler{Logger: logger, Service: service}
 }
 

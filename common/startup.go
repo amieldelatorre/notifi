@@ -2,14 +2,14 @@ package common // import "github.com/amieldelatorre/notifi/common"
 
 import (
 	"context"
+	"log/slog"
 
-	"github.com/amieldelatorre/notifi/logger"
 	"github.com/amieldelatorre/notifi/utils"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Startup struct {
-	Logger *logger.Logger
+	Logger *slog.Logger
 }
 
 func (st *Startup) InitDb(requiredEnvVars *utils.RequiredEnvVariables) *pgxpool.Pool {
