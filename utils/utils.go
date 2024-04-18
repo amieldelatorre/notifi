@@ -58,7 +58,7 @@ func (ut *Util) GetRequiredEnvVariables() (RequiredEnvVariables, error) {
 	}
 
 	if len(retrievalErrors) != 0 {
-		ut.Logger.Debug("There were missing environment variables")
+		ut.Logger.Error("There were missing environment variables")
 		return requiredEnvVariables, errors.Join(retrievalErrors...)
 	}
 
@@ -86,7 +86,7 @@ func (ut *Util) GetRequiredEnvVariable(varName string) (string, error) {
 }
 
 func (ut *Util) ExitWithError(status int, err error) {
-	ut.Logger.Debug("Exiting with error")
+	ut.Logger.Error("Exiting with error")
 	fmt.Println(err)
 	os.Exit(1)
 }

@@ -20,6 +20,7 @@ func New(logger *slog.Logger, service userService.Service) UserHandler {
 }
 
 func (h UserHandler) RegisterRoutes(mux *http.ServeMux) {
+	h.Logger.Debug("Registering routes for the user handler")
 	m := middleware.New(h.Logger)
 	getUserHandler := m.AddRequestId(http.HandlerFunc(h.getUser))
 

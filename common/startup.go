@@ -27,14 +27,14 @@ func (st *Startup) InitDb(requiredEnvVars *utils.RequiredEnvVariables) *pgxpool.
 	ut.Logger.Debug("Creating database pool with connection string")
 	dbPool, err := pgxpool.New(context.Background(), postgres_connection_string)
 	if err != nil {
-		ut.Logger.Debug("Error when creating database pool")
+		ut.Logger.Error("Could not create database pool")
 		ut.ExitWithError(1, err)
 	}
 
 	ut.Logger.Debug("Checking connectivity with database")
 	err = dbPool.Ping(context.Background())
 	if err != nil {
-		ut.Logger.Debug("Error with database connectivity")
+		ut.Logger.Error("Could not connect to database")
 		ut.ExitWithError(1, err)
 	}
 
