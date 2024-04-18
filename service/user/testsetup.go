@@ -15,7 +15,7 @@ type MockUserProvider struct {
 
 type TestGetUserByIdTestCase struct {
 	ExpectedStatusCode int
-	Response           GetUserResponse
+	Response           UserResponse
 	UserId             int
 }
 
@@ -47,6 +47,22 @@ func NewMockUserRepo() MockUserProvider {
 	return MockUserProvider{Users: GetTestUsers()}
 }
 
+func (mr *MockUserProvider) CreateUser(ctx context.Context, input model.UserInput) (int, error) {
+	id := len(mr.Users) + 1
+	newUser := model.User{
+		Id:              id,
+		Email:           input.Email,
+		FirstName:       input.FirstName,
+		LastName:        input.LastName,
+		Password:        input.Password,
+		DatetimeCreated: time.Now(),
+		DatetimeUpdated: time.Now(),
+	}
+
+	mr.Users = append(mr.Users, newUser)
+	return id, nil
+}
+
 func (mr *MockUserProvider) GetUserById(ctx context.Context, id int) (model.User, error) {
 	for _, val := range mr.Users {
 		if val.Id == id {
@@ -57,13 +73,22 @@ func (mr *MockUserProvider) GetUserById(ctx context.Context, id int) (model.User
 	return model.User{}, pgx.ErrNoRows
 }
 
+func (mr *MockUserProvider) GetUserByEmail(ctx context.Context, email string) (model.User, error) {
+	for _, user := range mr.Users {
+		if user.Email == email {
+			return user, nil
+		}
+	}
+	return model.User{}, pgx.ErrNoRows
+}
+
 func GetValidTestGetUserByIdTestCases() []TestGetUserByIdTestCase {
 	testCases := []TestGetUserByIdTestCase{}
 
 	for _, u := range GetTestUsers() {
 		tc := TestGetUserByIdTestCase{
 			ExpectedStatusCode: http.StatusOK,
-			Response:           GetUserResponse{User: &u, Errors: map[string]string{}},
+			Response:           UserResponse{User: &u, Errors: map[string][]string{}},
 			UserId:             u.Id,
 		}
 		testCases = append(testCases, tc)
@@ -74,7 +99,7 @@ func GetValidTestGetUserByIdTestCases() []TestGetUserByIdTestCase {
 func GetInvalidTestGetUserByIdTestCase() TestGetUserByIdTestCase {
 	return TestGetUserByIdTestCase{
 		ExpectedStatusCode: http.StatusNotFound,
-		Response:           GetUserResponse{Errors: map[string]string{"user": "User not found"}},
+		Response:           UserResponse{Errors: map[string][]string{"user": {"User not found"}}},
 		UserId:             100,
 	}
 }
