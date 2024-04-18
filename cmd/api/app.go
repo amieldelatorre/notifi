@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/amieldelatorre/notifi/common"
 	"github.com/amieldelatorre/notifi/utils"
@@ -16,16 +17,23 @@ import (
 type Application struct {
 	DbPool      *pgxpool.Pool
 	UserHandler userHandler.UserHandler
+	Logger      slog.Logger
 }
 
 func NewApp() Application {
-	requiredEnvVars, err := utils.GetRequiredEnvVariables()
+	logger := utils.GetLogger(os.Stdout, slog.LevelInfo)
+	ut := utils.Util{Logger: logger}
+
+	logger.Info("Gathering requirements for application")
+	requiredEnvVars, err := ut.GetRequiredEnvVariables()
 	if err != nil {
-		utils.ExitWithError(1, err)
+		ut.ExitWithError(1, err)
 	}
 
-	dbPool := common.InitDb(&requiredEnvVars)
-	usrHandler := userHandler.New(userService.New(userProvider.NewUserPostgresProvider(dbPool)))
+	st := common.Startup{Logger: logger}
+	dbPool := st.InitDb(&requiredEnvVars)
+
+	usrHandler := userHandler.New(logger, userService.New(userProvider.NewUserPostgresProvider(dbPool)))
 
 	app := Application{
 		DbPool:      dbPool,
@@ -36,14 +44,17 @@ func NewApp() Application {
 }
 
 func (app *Application) Exit() {
+	app.Logger.Info("Exiting application...")
 	app.DbPool.Close()
 }
 
 func (app *Application) Run() {
+	app.Logger.Info("Attempting to start application...")
 	mux := http.NewServeMux()
+
 	app.UserHandler.RegisterRoutes(mux)
 
-	fmt.Println("Starting application on port 8080")
+	app.Logger.Info("Starting application on port 8080")
 	err := http.ListenAndServe(":8080", mux)
 	if err != nil {
 		panic(err)

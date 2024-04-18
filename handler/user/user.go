@@ -2,6 +2,7 @@ package user // import "github.com/amieldelatorre/notifi/handler/user"
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -9,11 +10,12 @@ import (
 )
 
 type UserHandler struct {
+	Logger  *slog.Logger
 	Service userService.Service
 }
 
-func New(service userService.Service) UserHandler {
-	return UserHandler{Service: service}
+func New(logger *slog.Logger, service userService.Service) UserHandler {
+	return UserHandler{Logger: logger, Service: service}
 }
 
 func (h UserHandler) RegisterRoutes(mux *http.ServeMux) {

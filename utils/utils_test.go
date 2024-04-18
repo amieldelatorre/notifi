@@ -3,11 +3,30 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
 	"os"
 	"os/exec"
+	"reflect"
 	"strings"
 	"testing"
 )
+
+func GetUtil() Util {
+	logger := GetLogger(io.Discard, slog.LevelWarn)
+	return Util{Logger: logger}
+}
+
+func TestGetLogger(t *testing.T) {
+	expectedLoggerType := reflect.TypeOf(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+
+	logger := GetLogger(os.Stdout, slog.LevelWarn)
+	loggerType := reflect.TypeOf(logger)
+
+	if loggerType != expectedLoggerType {
+		t.Fatalf("expected logger type '%s', got '%s'", expectedLoggerType, loggerType)
+	}
+}
 
 func TestGetPostgresConnectionString(t *testing.T) {
 	// Expected
@@ -19,9 +38,10 @@ func TestGetPostgresConnectionString(t *testing.T) {
 	postgresUsername := "root"
 	postgresPassword := "root"
 	postgresDabaseName := "db"
+	ut := GetUtil()
 
 	// Act
-	actualConnectionString := GetPostgresConnectionString(postgresHost, postgresPort, postgresUsername, postgresPassword, postgresDabaseName)
+	actualConnectionString := ut.GetPostgresConnectionString(postgresHost, postgresPort, postgresUsername, postgresPassword, postgresDabaseName)
 
 	// Assert
 	if expectedConnectionString != actualConnectionString {
@@ -31,8 +51,9 @@ func TestGetPostgresConnectionString(t *testing.T) {
 
 func TestGetRequiredEnvVariableMissing(t *testing.T) {
 	fakeEnvVarName := "SHOULD_NOT_EXIST"
+	ut := GetUtil()
 
-	_, err := GetRequiredEnvVariable(fakeEnvVarName)
+	_, err := ut.GetRequiredEnvVariable(fakeEnvVarName)
 
 	if err == nil {
 		t.Fatalf("expected error found")
@@ -43,8 +64,9 @@ func TestGetRequiredEnvVariableFound(t *testing.T) {
 	fakeEnvVarName := "SHOULD_EXIST"
 	fakeEnvVarValue := "exists"
 	os.Setenv(fakeEnvVarName, fakeEnvVarValue)
+	ut := GetUtil()
 
-	value, err := GetRequiredEnvVariable(fakeEnvVarName)
+	value, err := ut.GetRequiredEnvVariable(fakeEnvVarName)
 
 	if value != fakeEnvVarValue {
 		t.Fatalf("expected environment variable value '%s', got '%s'", fakeEnvVarValue, value)
@@ -68,7 +90,9 @@ func TestGetRequiredEnvVariablesFail(t *testing.T) {
 		os.Unsetenv(envVar)
 	}
 
-	_, err := GetRequiredEnvVariables()
+	ut := GetUtil()
+
+	_, err := ut.GetRequiredEnvVariables()
 
 	if err == nil {
 		t.Fatalf("expected errors")
@@ -102,8 +126,9 @@ func TestGetRequiredEnvVariablesSuccess(t *testing.T) {
 		PortgresPassword:   varValue,
 		PortgresDabasename: varValue,
 	}
+	ut := GetUtil()
 
-	actual, err := GetRequiredEnvVariables()
+	actual, err := ut.GetRequiredEnvVariables()
 	if err != nil {
 		t.Fatalf("expected no errors")
 	}
@@ -116,9 +141,10 @@ func TestGetRequiredEnvVariablesSuccess(t *testing.T) {
 func TestExitWithError(t *testing.T) {
 	exitStatus := 1
 	testError := errors.New("Test Error")
+	ut := GetUtil()
 
 	if os.Getenv("GO_TEST_EXIT_PROGRAM") == "1" {
-		ExitWithError(exitStatus, testError)
+		ut.ExitWithError(exitStatus, testError)
 		return
 	}
 

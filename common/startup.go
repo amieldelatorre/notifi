@@ -2,13 +2,21 @@ package common // import "github.com/amieldelatorre/notifi/common"
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/amieldelatorre/notifi/utils"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func InitDb(requiredEnvVars *utils.RequiredEnvVariables) *pgxpool.Pool {
-	postgres_connection_string := utils.GetPostgresConnectionString(
+type Startup struct {
+	Logger *slog.Logger
+}
+
+func (st *Startup) InitDb(requiredEnvVars *utils.RequiredEnvVariables) *pgxpool.Pool {
+	st.Logger.Info("Initialising database connection")
+
+	ut := utils.Util{Logger: st.Logger}
+	postgres_connection_string := ut.GetPostgresConnectionString(
 		requiredEnvVars.PortgresHost,
 		requiredEnvVars.PortgresPort,
 		requiredEnvVars.PortgresUsername,
@@ -16,14 +24,18 @@ func InitDb(requiredEnvVars *utils.RequiredEnvVariables) *pgxpool.Pool {
 		requiredEnvVars.PortgresDabasename,
 	)
 
+	ut.Logger.Debug("Creating database pool with connection string")
 	dbPool, err := pgxpool.New(context.Background(), postgres_connection_string)
 	if err != nil {
-		utils.ExitWithError(1, err)
+		ut.Logger.Debug("Error when creating database pool")
+		ut.ExitWithError(1, err)
 	}
 
+	ut.Logger.Debug("Checking connectivity with database")
 	err = dbPool.Ping(context.Background())
 	if err != nil {
-		utils.ExitWithError(1, err)
+		ut.Logger.Debug("Error with database connectivity")
+		ut.ExitWithError(1, err)
 	}
 
 	return dbPool

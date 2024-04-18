@@ -3,6 +3,7 @@ package utils // import "github.com/amieldelatorre/notifi/utils"
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 )
 
@@ -22,39 +23,46 @@ type RequiredEnvVariables struct {
 	PortgresDabasename string
 }
 
-func GetRequiredEnvVariables() (RequiredEnvVariables, error) {
+type Util struct {
+	Logger *slog.Logger
+}
+
+func (ut *Util) GetRequiredEnvVariables() (RequiredEnvVariables, error) {
+	ut.Logger.Debug("Getting required environment variables")
 	requiredEnvVariables := RequiredEnvVariables{}
 	var retrievalErrors []error
 
-	dbHost, err := GetRequiredEnvVariable(PortgresHostEnvVariableName)
+	dbHost, err := ut.GetRequiredEnvVariable(PortgresHostEnvVariableName)
 	if err != nil {
 		retrievalErrors = append(retrievalErrors, err)
 	}
 
-	dbPort, err := GetRequiredEnvVariable(PortgresPortEnvVariableName)
+	dbPort, err := ut.GetRequiredEnvVariable(PortgresPortEnvVariableName)
 	if err != nil {
 		retrievalErrors = append(retrievalErrors, err)
 	}
 
-	dbUsername, err := GetRequiredEnvVariable(PortgresUsernameEnvVariableName)
+	dbUsername, err := ut.GetRequiredEnvVariable(PortgresUsernameEnvVariableName)
 	if err != nil {
 		retrievalErrors = append(retrievalErrors, err)
 	}
 
-	dbPassword, err := GetRequiredEnvVariable(PortgresPasswordEnvVariableName)
+	dbPassword, err := ut.GetRequiredEnvVariable(PortgresPasswordEnvVariableName)
 	if err != nil {
 		retrievalErrors = append(retrievalErrors, err)
 	}
 
-	dbName, err := GetRequiredEnvVariable(PortgresDatabaseNameEnvVariableName)
+	dbName, err := ut.GetRequiredEnvVariable(PortgresDatabaseNameEnvVariableName)
 	if err != nil {
 		retrievalErrors = append(retrievalErrors, err)
 	}
 
 	if len(retrievalErrors) != 0 {
+		ut.Logger.Debug("There were missing environment variables")
 		return requiredEnvVariables, errors.Join(retrievalErrors...)
 	}
 
+	ut.Logger.Debug("All required environment variables found")
 	requiredEnvVariables.PortgresHost = dbHost
 	requiredEnvVariables.PortgresPort = dbPort
 	requiredEnvVariables.PortgresUsername = dbUsername
@@ -64,10 +72,12 @@ func GetRequiredEnvVariables() (RequiredEnvVariables, error) {
 	return requiredEnvVariables, nil
 }
 
-func GetRequiredEnvVariable(varName string) (string, error) {
+func (ut *Util) GetRequiredEnvVariable(varName string) (string, error) {
+	ut.Logger.Debug("Getting required environment variable '", varName, "'")
 	value := os.Getenv(varName)
 
 	if value == "" {
+		ut.Logger.Debug("Required environment variable '", varName, "' not found")
 		err_msg := fmt.Sprintf("ERROR: environment variable '%s' cannot be blank or empty", varName)
 		return "", errors.New(err_msg)
 	}
@@ -75,11 +85,13 @@ func GetRequiredEnvVariable(varName string) (string, error) {
 	return value, nil
 }
 
-func ExitWithError(status int, err error) {
+func (ut *Util) ExitWithError(status int, err error) {
+	ut.Logger.Debug("Exiting with error")
 	fmt.Println(err)
 	os.Exit(1)
 }
 
-func GetPostgresConnectionString(host string, port string, username string, password string, dbName string) string {
+func (ut *Util) GetPostgresConnectionString(host string, port string, username string, password string, dbName string) string {
+	ut.Logger.Debug("Creating Postgres connection string")
 	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s", username, password, host, port, dbName)
 }

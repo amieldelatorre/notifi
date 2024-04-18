@@ -3,6 +3,7 @@ package user
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -10,12 +11,14 @@ import (
 	"testing"
 
 	userService "github.com/amieldelatorre/notifi/service/user"
+	"github.com/amieldelatorre/notifi/utils"
 )
 
 func GetNewMockUserHandler() UserHandler {
+	logger := utils.GetLogger(io.Discard, slog.LevelWarn)
 	mockUserProvider := userService.NewMockUserRepo()
 	service := userService.New(&mockUserProvider)
-	mockUserHandler := New(service)
+	mockUserHandler := New(logger, service)
 	return mockUserHandler
 }
 
