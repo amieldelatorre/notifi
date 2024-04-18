@@ -39,10 +39,12 @@ func (h UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h UserHandler) getUser(w http.ResponseWriter, r *http.Request) {
+	h.Logger.Debug("Retrieving user", "requestId", r.Context().Value(middleware.RequestIdName))
 	w.Header().Set("Content-Type", "application/json")
 
 	userId, err := strconv.Atoi(r.Header.Get("x-user-id"))
 	if err != nil {
+		h.Logger.Error("When retrieving user, could not convert string to int", "requestId", r.Context().Value(middleware.RequestIdName), "error", err, "responseStatusCode", http.StatusInternalServerError)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -50,6 +52,7 @@ func (h UserHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	statusCode, response := h.Service.GetUserById(r.Context(), userId)
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
+	h.Logger.Debug("User retrieval", "requestId", r.Context().Value(middleware.RequestIdName), "responseStatusCode", statusCode)
 }
 
 func (h UserHandler) putUser(w http.ResponseWriter, r *http.Request) {

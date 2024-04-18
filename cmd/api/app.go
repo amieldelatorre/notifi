@@ -34,7 +34,7 @@ func NewApp() Application {
 	st := common.Startup{Logger: logger}
 	dbPool := st.InitDb(&requiredEnvVars)
 
-	usrHandler := userHandler.New(logger, userService.New(userProvider.NewUserPostgresProvider(dbPool)))
+	usrHandler := userHandler.New(logger, userService.New(logger, userProvider.NewUserPostgresProvider(dbPool)))
 
 	app := Application{
 		DbPool:      dbPool,

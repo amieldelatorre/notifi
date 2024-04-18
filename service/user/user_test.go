@@ -2,13 +2,18 @@ package user
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"reflect"
 	"testing"
+
+	"github.com/amieldelatorre/notifi/logger"
 )
 
 func TestGetUserById(t *testing.T) {
+	logger := logger.New(io.Discard, slog.LevelWarn)
 	mockUserProvider := NewMockUserRepo()
-	service := New(&mockUserProvider)
+	service := New(logger, &mockUserProvider)
 
 	testCases := GetValidTestGetUserByIdTestCases()
 	testCases = append(testCases, GetInvalidTestGetUserByIdTestCase())

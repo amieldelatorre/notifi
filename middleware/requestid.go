@@ -1,4 +1,4 @@
-package middleware
+package middleware // import "github.com/amieldelatorre/notifi/middleware"
 
 import (
 	"context"

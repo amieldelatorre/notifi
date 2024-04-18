@@ -17,7 +17,7 @@ import (
 func GetNewMockUserHandler() UserHandler {
 	logger := logger.New(io.Discard, slog.LevelWarn)
 	mockUserProvider := userService.NewMockUserRepo()
-	service := userService.New(&mockUserProvider)
+	service := userService.New(logger, &mockUserProvider)
 	mockUserHandler := New(logger, service)
 	return mockUserHandler
 }
