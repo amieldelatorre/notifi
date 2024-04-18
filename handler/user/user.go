@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/amieldelatorre/notifi/logger"
+	"github.com/amieldelatorre/notifi/middleware"
 	userService "github.com/amieldelatorre/notifi/service/user"
 )
 
@@ -19,7 +20,8 @@ func New(logger *logger.Logger, service userService.Service) UserHandler {
 }
 
 func (h UserHandler) RegisterRoutes(mux *http.ServeMux) {
-	getUserHandler := http.HandlerFunc(h.getUser)
+	m := middleware.New(h.Logger)
+	getUserHandler := m.AddRequestId(http.HandlerFunc(h.getUser))
 
 	mux.HandleFunc("POST /api/v1/user", h.postUser)
 	mux.Handle("GET /api/v1/user", getUserHandler)

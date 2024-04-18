@@ -18,7 +18,7 @@ import (
 type Application struct {
 	DbPool      *pgxpool.Pool
 	UserHandler userHandler.UserHandler
-	Logger      slog.Logger
+	Logger      logger.Logger
 }
 
 func NewApp() Application {
@@ -39,6 +39,7 @@ func NewApp() Application {
 	app := Application{
 		DbPool:      dbPool,
 		UserHandler: usrHandler,
+		Logger:      *logger,
 	}
 
 	return app
