@@ -20,7 +20,7 @@ func New(logger *slog.Logger, service userService.Service) UserHandler {
 	return UserHandler{Logger: logger, Service: service}
 }
 
-func (h UserHandler) RegisterRoutes(mux *http.ServeMux) {
+func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	h.Logger.Debug("Registering routes for the user handler")
 	m := middleware.New(h.Logger)
 	getUserHandler := m.AddRequestId(http.HandlerFunc(h.getUser))
@@ -32,7 +32,7 @@ func (h UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /api/v1/user", h.deleteUser)
 }
 
-func (h UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
 	requestId := r.Context().Value(middleware.RequestIdName)
 	h.Logger.Debug("Creating user", "requestId", requestId)
 	w.Header().Set("Content-Type", "application/json")
@@ -57,7 +57,7 @@ func (h UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Post User", "requestId", requestId, "responseStatusCode", statusCode)
 }
 
-func (h UserHandler) getUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	requestId := r.Context().Value(middleware.RequestIdName)
 	h.Logger.Debug("Retrieving user", "requestId", requestId)
 	w.Header().Set("Content-Type", "application/json")
@@ -76,13 +76,13 @@ func (h UserHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Info("Get User", "requestId", requestId, "responseStatusCode", statusCode)
 }
 
-func (h UserHandler) putUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) putUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-func (h UserHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	w.WriteHeader(http.StatusNotImplemented)

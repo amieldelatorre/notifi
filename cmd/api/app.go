@@ -10,14 +10,17 @@ import (
 	"github.com/amieldelatorre/notifi/utils"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	AuthHandler "github.com/amieldelatorre/notifi/handler/auth"
 	userHandler "github.com/amieldelatorre/notifi/handler/user"
 	userProvider "github.com/amieldelatorre/notifi/repository/user"
+	AuthService "github.com/amieldelatorre/notifi/service/auth"
 	userService "github.com/amieldelatorre/notifi/service/user"
 )
 
 type Application struct {
 	DbPool      *pgxpool.Pool
 	UserHandler userHandler.UserHandler
+	AuthHandler AuthHandler.AuthHandler
 	Logger      *slog.Logger
 }
 
@@ -34,11 +37,14 @@ func NewApp() Application {
 	st := common.Startup{Logger: logger}
 	dbPool := st.InitDb(&requiredEnvVars)
 
-	usrHandler := userHandler.New(logger, userService.New(logger, userProvider.NewUserPostgresProvider(dbPool)))
+	usrProvider := userProvider.NewUserPostgresProvider(dbPool)
+	usrHandler := userHandler.New(logger, userService.New(logger, usrProvider))
+	authHandler := AuthHandler.New(logger, AuthService.New(logger, usrProvider))
 
 	app := Application{
 		DbPool:      dbPool,
 		UserHandler: usrHandler,
+		AuthHandler: authHandler,
 		Logger:      logger,
 	}
 
@@ -55,6 +61,7 @@ func (app *Application) Run() {
 	mux := http.NewServeMux()
 
 	app.UserHandler.RegisterRoutes(mux)
+	app.AuthHandler.RegisterRoutes(mux)
 
 	app.Logger.Info("Starting application on port 8080")
 	err := http.ListenAndServe(":8080", mux)
