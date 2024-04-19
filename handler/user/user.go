@@ -30,8 +30,6 @@ func (h UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /api/v1/user", getUserHandler)
 	mux.HandleFunc("PUT /api/v1/user", h.putUser)
 	mux.HandleFunc("DELETE /api/v1/user", h.deleteUser)
-
-	// mux.Handle("GET /api/v1/user", middleware.ApiKeyAuth(getUserHandler))
 }
 
 func (h UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
@@ -44,10 +42,10 @@ func (h UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&userInput)
 	if err != nil {
 		if _, ok := err.(*json.InvalidUnmarshalError); ok {
-			h.Logger.Error("When creating user, could not unmarshal json", "requestId", requestId, "error", err, "responseStatusCode", http.StatusInternalServerError)
+			h.Logger.Error("Post User, could not unmarshal json from request body", "requestId", requestId, "error", err, "responseStatusCode", http.StatusInternalServerError)
 			w.WriteHeader(http.StatusInternalServerError)
 		} else {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			w.WriteHeader(http.StatusInternalServerError)
 			h.Logger.Info("Post User", "requestId", requestId, "responseStatusCode", http.StatusBadRequest)
 			return
 		}

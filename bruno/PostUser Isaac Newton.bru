@@ -1,0 +1,20 @@
+meta {
+  name: PostUser Isaac Newton
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://localhost:8080/api/v1/user
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "Email": "isaac.newton@invalid.com",
+    "FirstName": "Isaac",
+    "LastName": "Newton",
+    "Password": "password"
+  }
+}

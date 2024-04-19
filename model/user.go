@@ -53,7 +53,8 @@ func (input *UserInput) Validate() (UserInput, map[string][]string) {
 		Email:     strings.TrimSpace(input.Email),
 		FirstName: strings.TrimSpace(input.FirstName),
 		LastName:  strings.TrimSpace(input.LastName),
-		Password:  input.Password,
+		// Not trimming password because as long as there are 8 non white space characters that are in the middle of the string it satisfies requirements
+		Password: input.Password,
 	}
 
 	return cleanInput, validationErrors

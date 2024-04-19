@@ -11,6 +11,7 @@ import (
 
 	"github.com/amieldelatorre/notifi/logger"
 	"github.com/amieldelatorre/notifi/model"
+	"github.com/amieldelatorre/notifi/service/security"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -243,9 +244,19 @@ func TestCreateUserInput(t *testing.T) {
 		}
 
 		if actualResponse.User != nil && tc.ExpectedResponse.User != nil && (actualResponse.User.Id != tc.ExpectedResponse.User.Id || actualResponse.User.Email != tc.ExpectedResponse.User.Email ||
-			actualResponse.User.FirstName != tc.ExpectedResponse.User.FirstName || actualResponse.User.LastName != tc.ExpectedResponse.User.LastName ||
-			actualResponse.User.Password != tc.ExpectedResponse.User.Password) {
+			actualResponse.User.FirstName != tc.ExpectedResponse.User.FirstName || actualResponse.User.LastName != tc.ExpectedResponse.User.LastName) {
 			t.Fatalf("test case userId %s, expected response user %+v, got %+v", tc.UserInput.Email, tc.ExpectedResponse.User, actualResponse.User)
+		}
+
+		if actualResponse.User != nil && tc.ExpectedResponse.User != nil {
+			passwordsMatch, err := security.IsCorrectPassword(context.Background(), tc.UserInput.Password, actualResponse.User.Password, logger)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if !passwordsMatch {
+				t.Fatalf("expected passwords to match")
+			}
 		}
 	}
 }

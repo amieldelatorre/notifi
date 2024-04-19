@@ -1,4 +1,5 @@
 BEGIN;
+    -- DROP TABLE IF EXISTS Users;
     CREATE TABLE IF NOT EXISTS Users (
         id                  SERIAL 			PRIMARY KEY
         ,email              VARCHAR(255) 	not NULL UNIQUE

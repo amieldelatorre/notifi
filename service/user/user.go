@@ -9,6 +9,7 @@ import (
 	"github.com/amieldelatorre/notifi/middleware"
 	"github.com/amieldelatorre/notifi/model"
 	userProvider "github.com/amieldelatorre/notifi/repository/user"
+	"github.com/amieldelatorre/notifi/service/security"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -41,6 +42,14 @@ func (service *Service) CreateUser(ctx context.Context, input model.UserInput) (
 		return http.StatusBadRequest, response
 	}
 
+	hashedPassword, err := security.HashPassword(ctx, cleanInput.Password, service.Logger)
+	if err != nil {
+		service.Logger.Error("Post User, could not hash password", "requestId", ctx.Value(middleware.RequestIdName), "error", err)
+		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
+		return http.StatusInternalServerError, response
+	}
+
+	cleanInput.Password = hashedPassword
 	generatedId, err := service.Provider.CreateUser(ctx, cleanInput)
 	if err != nil {
 		service.Logger.Error("Could not create user from provider", "requestId", ctx.Value(middleware.RequestIdName), "error", err)
