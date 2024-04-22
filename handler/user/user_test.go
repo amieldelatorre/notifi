@@ -2,13 +2,13 @@ package user
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
-	"strconv"
 	"testing"
 	"time"
 
@@ -16,6 +16,7 @@ import (
 	"github.com/amieldelatorre/notifi/model"
 	"github.com/amieldelatorre/notifi/service/security"
 	userService "github.com/amieldelatorre/notifi/service/user"
+	"github.com/amieldelatorre/notifi/utils"
 )
 
 func GetNewMockUserHandler() UserHandler {
@@ -35,10 +36,10 @@ func TestGetUser(t *testing.T) {
 	testcases = append(testcases, userService.GetInvalidTestGetUserByIdTestCase())
 
 	for _, tc := range testcases {
-		userId := strconv.Itoa(tc.UserId)
-
 		request := httptest.NewRequest(http.MethodGet, "/api/v1/user", nil)
-		request.Header.Set("x-user-id", userId)
+		ctx := request.Context()
+		ctx = context.WithValue(ctx, utils.UserId, tc.UserId)
+		request = request.WithContext(ctx)
 
 		response := httptest.NewRecorder()
 		mockUserHandler.getUser(response, request)
