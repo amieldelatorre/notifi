@@ -7,7 +7,7 @@ import (
 )
 
 type UserProvider interface {
-	CreateUser(ctx context.Context, input model.UserInput) (int, error)
+	CreateUser(ctx context.Context, input model.UserInput) (model.User, error)
 	GetUserById(ctx context.Context, id int) (model.User, error)
 	GetUserByEmail(ctx context.Context, email string) (model.User, error)
 }

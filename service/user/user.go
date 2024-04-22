@@ -50,17 +50,10 @@ func (service *Service) CreateUser(ctx context.Context, input model.UserInput) (
 	}
 
 	cleanInput.Password = hashedPassword
-	generatedId, err := service.Provider.CreateUser(ctx, cleanInput)
+	newUser, err := service.Provider.CreateUser(ctx, cleanInput)
 	if err != nil {
 		service.Logger.Error("Could not create user from provider", "requestId", ctx.Value(middleware.RequestIdName), "error", err)
 		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
-		return http.StatusInternalServerError, response
-	}
-
-	newUser, err := service.Provider.GetUserById(ctx, generatedId)
-	if err != nil {
-		service.Logger.Error("New user created but something went wrong with retrieving the new user", "requestId", ctx.Value(middleware.RequestIdName), "error", err)
-		response.Errors["server"] = append(response.Errors["server"], "New user created but something went wrong with retrieving the new user")
 		return http.StatusInternalServerError, response
 	}
 

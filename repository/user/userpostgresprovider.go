@@ -15,10 +15,10 @@ func NewUserPostgresProvider(dbPool *pgxpool.Pool) *UserPostgresProvider {
 	return &UserPostgresProvider{DbPool: dbPool}
 }
 
-func (provider *UserPostgresProvider) CreateUser(ctx context.Context, input model.UserInput) (int, error) {
-	var generatedId int
-	err := provider.DbPool.QueryRow(ctx, "INSERT INTO Users (email, firstName, lastName, password, datetimeCreated, datetimeUpdated) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id", input.Email, input.FirstName, input.LastName, input.Password).Scan(&generatedId)
-	return generatedId, err
+func (provider *UserPostgresProvider) CreateUser(ctx context.Context, input model.UserInput) (model.User, error) {
+	var newUser model.User
+	err := provider.DbPool.QueryRow(ctx, "INSERT INTO Users (email, firstName, lastName, password, datetimeCreated, datetimeUpdated) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id, email, firstName, lastName, password, datetimeCreated, datetimeUpdated", input.Email, input.FirstName, input.LastName, input.Password).Scan(&newUser.Id, &newUser.Email, &newUser.FirstName, &newUser.LastName, &newUser.Password, &newUser.DatetimeCreated, &newUser.DatetimeUpdated)
+	return newUser, err
 }
 
 func (provider *UserPostgresProvider) GetUserById(ctx context.Context, id int) (model.User, error) {

@@ -47,7 +47,7 @@ func NewMockUserRepo() MockUserProvider {
 	return MockUserProvider{Users: GetTestUsers()}
 }
 
-func (mr *MockUserProvider) CreateUser(ctx context.Context, input model.UserInput) (int, error) {
+func (mr *MockUserProvider) CreateUser(ctx context.Context, input model.UserInput) (model.User, error) {
 	id := len(mr.Users) + 1
 	newUser := model.User{
 		Id:              id,
@@ -60,7 +60,7 @@ func (mr *MockUserProvider) CreateUser(ctx context.Context, input model.UserInpu
 	}
 
 	mr.Users = append(mr.Users, newUser)
-	return id, nil
+	return newUser, nil
 }
 
 func (mr *MockUserProvider) GetUserById(ctx context.Context, id int) (model.User, error) {
