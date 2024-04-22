@@ -12,10 +12,18 @@ type UserClaims struct {
 	jwt.RegisteredClaims
 }
 
-func CreateAccessToken(claims UserClaims, signingKey []byte) (string, error) {
+type JwtService struct {
+	SigningKey []byte
+}
+
+func NewJwtService(signingKey []byte) JwtService {
+	return JwtService{SigningKey: signingKey}
+}
+
+func (s *JwtService) CreateAccessToken(claims UserClaims) (string, error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	signedToken, err := accessToken.SignedString(signingKey)
+	signedToken, err := accessToken.SignedString(s.SigningKey)
 	if err != nil {
 		return "", err
 	}
@@ -23,9 +31,9 @@ func CreateAccessToken(claims UserClaims, signingKey []byte) (string, error) {
 	return signedToken, nil
 }
 
-func ParseAccessToken(tokenString string, signingKey []byte) (*UserClaims, error) {
+func (s *JwtService) ParseAccessToken(tokenString string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return signingKey, nil
+		return s.SigningKey, nil
 	})
 
 	if !token.Valid {

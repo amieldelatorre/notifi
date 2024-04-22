@@ -24,12 +24,13 @@ func TestAccessTokenSuccess(t *testing.T) {
 	}
 
 	signingKey := []byte("This_is_a_super_secret_key")
-	createdToken, err := CreateAccessToken(initialClaims, signingKey)
+	jwtService := NewJwtService(signingKey)
+	createdToken, err := jwtService.CreateAccessToken(initialClaims)
 	if err != nil {
 		t.Fatalf("Expected no error, got %+v", err)
 	}
 
-	retrievedClaims, err := ParseAccessToken(createdToken, signingKey)
+	retrievedClaims, err := jwtService.ParseAccessToken(createdToken)
 	if err != nil {
 		t.Error(err)
 	}
@@ -51,7 +52,8 @@ func TestAccessTokenFail(t *testing.T) {
 	}
 
 	signingKey := []byte("This_is_a_super_secret_key")
-	claims, err := ParseAccessToken(tc.token, signingKey)
+	jwtService := NewJwtService(signingKey)
+	claims, err := jwtService.ParseAccessToken(tc.token)
 	if err != tc.ExpectedError {
 		t.Fatalf("expected error '%s', got '%s'", tc.ExpectedError, err)
 	}

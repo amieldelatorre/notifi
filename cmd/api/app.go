@@ -14,6 +14,7 @@ import (
 	userHandler "github.com/amieldelatorre/notifi/handler/user"
 	userProvider "github.com/amieldelatorre/notifi/repository/user"
 	AuthService "github.com/amieldelatorre/notifi/service/auth"
+	securityService "github.com/amieldelatorre/notifi/service/security"
 	userService "github.com/amieldelatorre/notifi/service/user"
 )
 
@@ -39,7 +40,8 @@ func NewApp() Application {
 
 	usrProvider := userProvider.NewUserPostgresProvider(dbPool)
 	usrHandler := userHandler.New(logger, userService.New(logger, usrProvider))
-	authHandler := AuthHandler.New(logger, AuthService.New(logger, usrProvider))
+	// TODO: Get signing key from environment variable
+	authHandler := AuthHandler.New(logger, AuthService.New(logger, usrProvider, securityService.NewJwtService([]byte("super_secret_key"))))
 
 	app := Application{
 		DbPool:      dbPool,

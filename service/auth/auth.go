@@ -23,7 +23,7 @@ type AuthResponse struct {
 type Service struct {
 	Logger     *slog.Logger
 	Provider   authProvider.AuthProvider
-	SigningKey []byte
+	JwtService security.JwtService
 }
 
 type BasicAuthCredentials struct {
@@ -31,8 +31,8 @@ type BasicAuthCredentials struct {
 	Password string
 }
 
-func New(logger *slog.Logger, provider authProvider.AuthProvider) Service {
-	return Service{Logger: logger, Provider: provider}
+func New(logger *slog.Logger, provider authProvider.AuthProvider, jwtService security.JwtService) Service {
+	return Service{Logger: logger, Provider: provider, JwtService: jwtService}
 }
 
 func (s *Service) LoginUser(ctx context.Context, basicAuthCredentials BasicAuthCredentials) (int, AuthResponse) {
@@ -85,7 +85,7 @@ func (s *Service) LoginUser(ctx context.Context, basicAuthCredentials BasicAuthC
 		},
 	}
 
-	token, err := security.CreateAccessToken(claims, s.SigningKey)
+	token, err := s.JwtService.CreateAccessToken(claims)
 	if err != nil {
 		s.Logger.Error("Problem generating token for claims: %s", err)
 		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
