@@ -4,4 +4,5 @@ type ContextKey string
 
 const (
 	RequestIdName ContextKey = "RequestId"
+	UserId        ContextKey = "UserId"
 )

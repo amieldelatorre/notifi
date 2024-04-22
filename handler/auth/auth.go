@@ -7,21 +7,23 @@ import (
 
 	"github.com/amieldelatorre/notifi/middleware"
 	authService "github.com/amieldelatorre/notifi/service/auth"
+	"github.com/amieldelatorre/notifi/service/security"
 	"github.com/amieldelatorre/notifi/utils"
 )
 
 type AuthHandler struct {
-	Logger  *slog.Logger
-	Service authService.Service
+	Logger      *slog.Logger
+	AuthService authService.Service
+	JwtService  security.JwtService
 }
 
-func New(logger *slog.Logger, service authService.Service) AuthHandler {
-	return AuthHandler{Logger: logger, Service: service}
+func New(logger *slog.Logger, authService authService.Service, jwtService security.JwtService) AuthHandler {
+	return AuthHandler{Logger: logger, AuthService: authService, JwtService: jwtService}
 }
 
 func (h *AuthHandler) RegisterRoutes(mux *http.ServeMux) {
 	h.Logger.Debug("Registering routes for the auth handler")
-	m := middleware.New(h.Logger)
+	m := middleware.New(h.Logger, h.JwtService)
 
 	loginHandler := m.AddRequestId(http.HandlerFunc(h.login))
 
@@ -46,7 +48,7 @@ func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	statusCode, response := h.Service.LoginUser(r.Context(), basicAuthCredentials)
+	statusCode, response := h.AuthService.LoginUser(r.Context(), basicAuthCredentials)
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
 	h.Logger.Info("Login User", "requestId", requestId, "responseStatusCode", statusCode)

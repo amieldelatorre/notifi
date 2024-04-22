@@ -14,14 +14,17 @@ import (
 
 	"github.com/amieldelatorre/notifi/logger"
 	"github.com/amieldelatorre/notifi/model"
+	"github.com/amieldelatorre/notifi/service/security"
 	userService "github.com/amieldelatorre/notifi/service/user"
 )
 
 func GetNewMockUserHandler() UserHandler {
 	logger := logger.New(io.Discard, slog.LevelWarn)
 	mockUserProvider := userService.NewMockUserRepo()
-	service := userService.New(logger, &mockUserProvider)
-	mockUserHandler := New(logger, service)
+	usrService := userService.New(logger, &mockUserProvider)
+	jwtService := security.NewJwtService([]byte("super_secret_signing_key"))
+
+	mockUserHandler := New(logger, usrService, jwtService)
 	return mockUserHandler
 }
 

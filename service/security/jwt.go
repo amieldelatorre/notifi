@@ -31,6 +31,7 @@ func (s *JwtService) CreateAccessToken(claims UserClaims) (string, error) {
 	return signedToken, nil
 }
 
+// TODO: Improve error returns
 func (s *JwtService) ParseAccessToken(tokenString string) (*UserClaims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &UserClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return s.SigningKey, nil
