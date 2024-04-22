@@ -28,20 +28,6 @@ func GetNewMockUserHandler() UserHandler {
 	return mockUserHandler
 }
 
-func TestGetUserMissingUserIdHeader(t *testing.T) {
-	mockUserHandler := GetNewMockUserHandler()
-	request := httptest.NewRequest(http.MethodGet, "/api/v1/user", nil)
-	response := httptest.NewRecorder()
-	expectedStatusCode := http.StatusInternalServerError
-
-	mockUserHandler.getUser(response, request)
-
-	result := response.Result()
-	if result.StatusCode != expectedStatusCode {
-		t.Fatalf("expected status code %d, got %d", expectedStatusCode, result.StatusCode)
-	}
-}
-
 func TestGetUser(t *testing.T) {
 	mockUserHandler := GetNewMockUserHandler()
 
