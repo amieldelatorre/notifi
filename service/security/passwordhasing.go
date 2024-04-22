@@ -5,11 +5,11 @@ import (
 	"log/slog"
 
 	"github.com/alexedwards/argon2id"
-	"github.com/amieldelatorre/notifi/middleware"
+	"github.com/amieldelatorre/notifi/utils"
 )
 
 func HashPassword(ctx context.Context, password string, logger *slog.Logger) (string, error) {
-	requestId := ctx.Value(middleware.RequestIdName)
+	requestId := ctx.Value(utils.RequestIdName)
 	logger.Debug("Creating user", "requestId", requestId)
 
 	hash, err := argon2id.CreateHash(password, argon2id.DefaultParams)
@@ -21,7 +21,7 @@ func HashPassword(ctx context.Context, password string, logger *slog.Logger) (st
 }
 
 func IsCorrectPassword(ctx context.Context, password string, hash string, logger *slog.Logger) (bool, error) {
-	requestId := ctx.Value(middleware.RequestIdName)
+	requestId := ctx.Value(utils.RequestIdName)
 	logger.Debug("Creating user", "requestId", requestId)
 
 	match, err := argon2id.ComparePasswordAndHash(password, hash)

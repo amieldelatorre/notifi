@@ -7,6 +7,7 @@ import (
 
 	"github.com/amieldelatorre/notifi/middleware"
 	authService "github.com/amieldelatorre/notifi/service/auth"
+	"github.com/amieldelatorre/notifi/utils"
 )
 
 type AuthHandler struct {
@@ -28,7 +29,7 @@ func (h *AuthHandler) RegisterRoutes(mux *http.ServeMux) {
 }
 
 func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
-	requestId := r.Context().Value(middleware.RequestIdName)
+	requestId := r.Context().Value(utils.RequestIdName)
 	h.Logger.Debug("Login user", "requestId", requestId)
 
 	var basicAuthCredentials authService.BasicAuthCredentials

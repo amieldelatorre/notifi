@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/amieldelatorre/notifi/middleware"
 	"github.com/amieldelatorre/notifi/model"
 	userProvider "github.com/amieldelatorre/notifi/repository/user"
 	"github.com/amieldelatorre/notifi/service/security"
+	"github.com/amieldelatorre/notifi/utils"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -28,13 +28,14 @@ func New(logger *slog.Logger, provider userProvider.UserProvider) Service {
 }
 
 func (service *Service) CreateUser(ctx context.Context, input model.UserInput) (int, UserResponse) {
+	requestId := ctx.Value(utils.RequestIdName)
 	response := UserResponse{
 		Errors: make(map[string][]string),
 	}
 
 	cleanInput, validationErrs, err := service.validateUserinput(ctx, input)
 	if err != nil {
-		service.Logger.Error("Could not check if email exists", "requestId", ctx.Value(middleware.RequestIdName), "error", err)
+		service.Logger.Error("Could not check if email exists", "requestId", requestId, "error", err)
 		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
 		return http.StatusInternalServerError, response
 	} else if len(validationErrs) != 0 {
@@ -44,7 +45,7 @@ func (service *Service) CreateUser(ctx context.Context, input model.UserInput) (
 
 	hashedPassword, err := security.HashPassword(ctx, cleanInput.Password, service.Logger)
 	if err != nil {
-		service.Logger.Error("Post User, could not hash password", "requestId", ctx.Value(middleware.RequestIdName), "error", err)
+		service.Logger.Error("Post User, could not hash password", "requestId", requestId, "error", err)
 		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
 		return http.StatusInternalServerError, response
 	}
@@ -52,7 +53,7 @@ func (service *Service) CreateUser(ctx context.Context, input model.UserInput) (
 	cleanInput.Password = hashedPassword
 	newUser, err := service.Provider.CreateUser(ctx, cleanInput)
 	if err != nil {
-		service.Logger.Error("Could not create user from provider", "requestId", ctx.Value(middleware.RequestIdName), "error", err)
+		service.Logger.Error("Could not create user from provider", "requestId", requestId, "error", err)
 		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
 		return http.StatusInternalServerError, response
 	}
@@ -63,6 +64,7 @@ func (service *Service) CreateUser(ctx context.Context, input model.UserInput) (
 }
 
 func (service *Service) GetUserById(ctx context.Context, id int) (int, UserResponse) {
+	requestId := ctx.Value(utils.RequestIdName)
 	response := UserResponse{
 		Errors: make(map[string][]string),
 	}
@@ -72,7 +74,7 @@ func (service *Service) GetUserById(ctx context.Context, id int) (int, UserRespo
 		response.Errors["user"] = append(response.Errors["user"], "User not found")
 		return http.StatusNotFound, response
 	} else if err != nil {
-		service.Logger.Error("Could not get user from provider", "requestId", ctx.Value(middleware.RequestIdName), "error", err)
+		service.Logger.Error("Could not get user from provider", "requestId", requestId, "error", err)
 		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
 		return http.StatusInternalServerError, response
 	}

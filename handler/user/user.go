@@ -9,6 +9,7 @@ import (
 	"github.com/amieldelatorre/notifi/middleware"
 	"github.com/amieldelatorre/notifi/model"
 	userService "github.com/amieldelatorre/notifi/service/user"
+	"github.com/amieldelatorre/notifi/utils"
 )
 
 type UserHandler struct {
@@ -33,7 +34,7 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 }
 
 func (h *UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
-	requestId := r.Context().Value(middleware.RequestIdName)
+	requestId := r.Context().Value(utils.RequestIdName)
 	h.Logger.Debug("Creating user", "requestId", requestId)
 	w.Header().Set("Content-Type", "application/json")
 
@@ -58,7 +59,7 @@ func (h *UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) getUser(w http.ResponseWriter, r *http.Request) {
-	requestId := r.Context().Value(middleware.RequestIdName)
+	requestId := r.Context().Value(utils.RequestIdName)
 	h.Logger.Debug("Retrieving user", "requestId", requestId)
 	w.Header().Set("Content-Type", "application/json")
 

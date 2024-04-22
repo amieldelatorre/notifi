@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/amieldelatorre/notifi/utils"
 	"github.com/google/uuid"
 )
 
@@ -28,7 +29,7 @@ func (m *Middleware) AddRequestId(next http.Handler) http.Handler {
 
 		m.Logger.Debug("Request id generated and added to context", "requestId", id.String())
 
-		ctx := context.WithValue(r.Context(), RequestIdName, id.String())
+		ctx := context.WithValue(r.Context(), utils.RequestIdName, id.String())
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -36,7 +37,7 @@ func (m *Middleware) AddRequestId(next http.Handler) http.Handler {
 
 func (m *Middleware) RequireJwtToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		requestId := r.Context().Value(RequestIdName)
+		requestId := r.Context().Value(utils.RequestIdName)
 		m.Logger.Debug("Checking if request has the Authorization Bearer token", "requestId", requestId)
 
 		authHeader := r.Header.Get("Authorization")

@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/amieldelatorre/notifi/middleware"
 	authProvider "github.com/amieldelatorre/notifi/repository/auth"
 	"github.com/amieldelatorre/notifi/service/security"
+	"github.com/amieldelatorre/notifi/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -39,7 +39,7 @@ func (s *Service) LoginUser(ctx context.Context, basicAuthCredentials BasicAuthC
 	response := AuthResponse{
 		Errors: make(map[string][]string),
 	}
-	requestId := ctx.Value(middleware.RequestIdName)
+	requestId := ctx.Value(utils.RequestIdName)
 
 	user, err := s.Provider.GetUserByEmail(ctx, basicAuthCredentials.Email)
 	if err != nil && errors.Is(err, pgx.ErrNoRows) {

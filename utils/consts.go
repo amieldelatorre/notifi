@@ -1,4 +1,4 @@
-package middleware // import "github.com/amieldelatorre/notifi/middleware"
+package utils // import "github.com/amieldelatorre/notifi/utils"
 
 type ContextKey string
 
