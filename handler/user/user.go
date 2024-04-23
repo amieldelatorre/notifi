@@ -25,8 +25,8 @@ func New(logger *slog.Logger, service userService.Service, jwtService security.J
 func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	h.Logger.Debug("Registering routes for the user handler")
 	m := middleware.New(h.Logger, h.JwtService)
-	getUserHandler := m.AddRequestId(m.RequireJwtToken(http.HandlerFunc(h.getUser)))
-	postUserHandler := m.AddRequestId(http.HandlerFunc(h.postUser))
+	getUserHandler := m.RecoverPanic(m.AddRequestId(m.RequireJwtToken(http.HandlerFunc(h.getUser))))
+	postUserHandler := m.RecoverPanic(m.AddRequestId(http.HandlerFunc(h.postUser)))
 
 	mux.Handle("POST /api/v1/user", postUserHandler)
 	mux.Handle("GET /api/v1/user", getUserHandler)

@@ -25,6 +25,19 @@ func New(logger *slog.Logger, jwtService security.JwtService) Middleware {
 	return Middleware{Logger: logger, JwtService: &jwtService}
 }
 
+func (m *Middleware) RecoverPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				m.Logger.Error("Had to recover from panic", "error", err)
+				w.WriteHeader(http.StatusInternalServerError)
+			}
+		}()
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (m *Middleware) AddRequestId(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		m.Logger.Debug("Adding a request id to incoming request")
@@ -63,7 +76,7 @@ func (m *Middleware) RequireJwtToken(next http.Handler) http.Handler {
 
 		authHeaderSlice := strings.Split(authHeader, " ")
 		if len(authHeaderSlice) != 2 {
-			response.Errors["Authorization"] = append(response.Errors["Authorization"], "Wrong Authorization header type, this endpoint requires an Authorization of 'Bearer' and have a token")
+			response.Errors["Authorization"] = append(response.Errors["Authorization"], "Wrong Authorization header type, this endpoint requires an Authorization of 'Bearer' and a token")
 			m.Logger.Debug("Authorization header value does not contain the right amount of values (2)", "requestId", requestId)
 
 			w.WriteHeader(http.StatusUnauthorized)

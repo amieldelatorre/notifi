@@ -25,7 +25,7 @@ func (h *AuthHandler) RegisterRoutes(mux *http.ServeMux) {
 	h.Logger.Debug("Registering routes for the auth handler")
 	m := middleware.New(h.Logger, h.JwtService)
 
-	loginHandler := m.AddRequestId(http.HandlerFunc(h.login))
+	loginHandler := m.RecoverPanic(m.AddRequestId(http.HandlerFunc(h.login)))
 
 	mux.Handle("POST /api/v1/auth/login", loginHandler)
 }
