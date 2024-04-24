@@ -64,13 +64,13 @@ func TestCreateMessage(t *testing.T) {
 		}
 
 		if !reflect.DeepEqual(actualResponse.Errors, tc.ExpectedResponse.Errors) {
-			t.Fatalf("test case number %d, expected response user %+v, got %+v", tcn, tc.ExpectedResponse, actualResponse)
+			t.Fatalf("test case number %d, expected response %+v, got %+v", tcn, tc.ExpectedResponse, actualResponse)
 		}
 
 		if actualResponse.Message != nil && tc.ExpectedResponse.Message != nil && (actualResponse.Message.Id != tc.ExpectedResponse.Message.Id ||
 			actualResponse.Message.UserId != tc.ExpectedResponse.Message.UserId || actualResponse.Message.Title != tc.ExpectedResponse.Message.Title ||
 			actualResponse.Message.Body != tc.ExpectedResponse.Message.Body || actualResponse.Message.Status != tc.ExpectedResponse.Message.Status) {
-			t.Fatalf("test case number %d, expected response user %+v, got %+v", tcn, tc.ExpectedResponse.Message, actualResponse.Message)
+			t.Fatalf("test case number %d, expected response %+v, got %+v", tcn, tc.ExpectedResponse.Message, actualResponse.Message)
 		}
 	}
 }
