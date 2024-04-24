@@ -11,8 +11,6 @@ BEGIN
             ,datetimeUpdated    TIMESTAMPTZ 	not NULL
         );
         
-        SELECT * FROM notexists;
-
     EXCEPTION
         WHEN OTHERS THEN
             RAISE NOTICE 'Error: %', SQLERRM;

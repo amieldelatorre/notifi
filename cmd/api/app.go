@@ -18,7 +18,7 @@ import (
 
 	AuthHandler "github.com/amieldelatorre/notifi/handler/auth"
 	userHandler "github.com/amieldelatorre/notifi/handler/user"
-	userProvider "github.com/amieldelatorre/notifi/repository/user"
+	"github.com/amieldelatorre/notifi/repository"
 	AuthService "github.com/amieldelatorre/notifi/service/auth"
 	"github.com/amieldelatorre/notifi/service/security"
 	userService "github.com/amieldelatorre/notifi/service/user"
@@ -49,7 +49,7 @@ func NewApp() Application {
 	signingKey := []byte("super_secret_signing_key")
 	jwtService := security.NewJwtService(signingKey)
 
-	usrProvider := userProvider.NewUserPostgresProvider(dbPool)
+	usrProvider := repository.NewUserPostgresProvider(dbPool)
 	usrHandler := userHandler.New(logger, userService.New(logger, usrProvider), jwtService)
 	authHandler := AuthHandler.New(logger, AuthService.New(logger, usrProvider, jwtService), jwtService)
 

@@ -7,13 +7,17 @@ import (
 	"net/http"
 	"time"
 
-	authProvider "github.com/amieldelatorre/notifi/repository/auth"
+	"github.com/amieldelatorre/notifi/model"
 	"github.com/amieldelatorre/notifi/service/security"
 	"github.com/amieldelatorre/notifi/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
+
+type AuthProvider interface {
+	GetUserByEmail(ctx context.Context, email string) (model.User, error)
+}
 
 type AuthResponse struct {
 	Token  string              `json:"token,omitempty"`
@@ -22,7 +26,7 @@ type AuthResponse struct {
 
 type Service struct {
 	Logger     *slog.Logger
-	Provider   authProvider.AuthProvider
+	Provider   AuthProvider
 	JwtService security.JwtService
 }
 
@@ -31,7 +35,7 @@ type BasicAuthCredentials struct {
 	Password string
 }
 
-func New(logger *slog.Logger, provider authProvider.AuthProvider, jwtService security.JwtService) Service {
+func New(logger *slog.Logger, provider AuthProvider, jwtService security.JwtService) Service {
 	return Service{Logger: logger, Provider: provider, JwtService: jwtService}
 }
 

@@ -1,4 +1,4 @@
-package user // import "github.com/amieldelatorre/notifi/repository/user"
+package repository // import "github.com/amieldelatorre/notifi/repository"
 
 import (
 	"context"

@@ -7,11 +7,16 @@ import (
 	"net/http"
 
 	"github.com/amieldelatorre/notifi/model"
-	userProvider "github.com/amieldelatorre/notifi/repository/user"
 	"github.com/amieldelatorre/notifi/service/security"
 	"github.com/amieldelatorre/notifi/utils"
 	"github.com/jackc/pgx/v5"
 )
+
+type UserProvider interface {
+	CreateUser(ctx context.Context, input model.UserInput) (model.User, error)
+	GetUserById(ctx context.Context, id int) (model.User, error)
+	GetUserByEmail(ctx context.Context, email string) (model.User, error)
+}
 
 type UserResponse struct {
 	User   *model.User         `json:"user,omitempty"`
@@ -19,11 +24,11 @@ type UserResponse struct {
 }
 
 type Service struct {
-	Provider userProvider.UserProvider
+	Provider UserProvider
 	Logger   *slog.Logger
 }
 
-func New(logger *slog.Logger, provider userProvider.UserProvider) Service {
+func New(logger *slog.Logger, provider UserProvider) Service {
 	return Service{Logger: logger, Provider: provider}
 }
 
