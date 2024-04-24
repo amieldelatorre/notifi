@@ -31,7 +31,7 @@ func (provider *UserPostgresProvider) CreateUser(ctx context.Context, input mode
 		&newUser.Id, &newUser.Email, &newUser.FirstName, &newUser.LastName, &newUser.Password,
 		&newUser.DatetimeCreated, &newUser.DatetimeUpdated)
 	if err != nil {
-		return newUser, nil
+		return newUser, err
 	}
 
 	err = tx.Commit(ctx)
