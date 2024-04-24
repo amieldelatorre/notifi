@@ -127,5 +127,7 @@ func (m *Middleware) RequireApplicationJson(next http.Handler) http.Handler {
 			w.WriteHeader(http.StatusUnsupportedMediaType)
 			json.NewEncoder(w).Encode(response)
 		}
+
+		next.ServeHTTP(w, r)
 	})
 }
