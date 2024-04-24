@@ -40,15 +40,21 @@ func (h *UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var userInput model.UserInput
+	var response userService.UserResponse
 
 	err := json.NewDecoder(r.Body).Decode(&userInput)
 	if err != nil {
 		if _, ok := err.(*json.InvalidUnmarshalError); ok {
 			h.Logger.Error("Post User, could not unmarshal json from request body", "requestId", requestId, "error", err, "responseStatusCode", http.StatusInternalServerError)
+			response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
+
 			w.WriteHeader(http.StatusInternalServerError)
+			return
 		} else {
-			w.WriteHeader(http.StatusInternalServerError)
 			h.Logger.Info("Post User", "requestId", requestId, "responseStatusCode", http.StatusBadRequest)
+
+			response.Errors["userInput"] = append(response.Errors["userInput"], "Invalid json")
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 	}
