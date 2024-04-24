@@ -49,12 +49,14 @@ func (h *UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
 			response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
 
 			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(response)
 			return
 		} else {
 			h.Logger.Info("Post User", "requestId", requestId, "responseStatusCode", http.StatusBadRequest)
 
 			response.Errors["userInput"] = append(response.Errors["userInput"], "Invalid json")
 			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(response)
 			return
 		}
 	}
