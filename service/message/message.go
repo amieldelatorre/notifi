@@ -40,13 +40,13 @@ func (s *Service) CreateMessage(ctx context.Context, input model.MessageInput) (
 		return http.StatusBadRequest, response
 	}
 
-	newMessage := model.Message{
+	messageToCreate := model.Message{
 		UserId: ctx.Value(utils.UserId).(int),
 		Title:  cleanInput.Title,
 		Body:   cleanInput.Body,
 	}
 
-	newMessage, err := s.Provider.CreateMessage(ctx, newMessage)
+	newMessage, err := s.Provider.CreateMessage(ctx, messageToCreate)
 	if err != nil {
 		s.Logger.Error("Could not create message from provider", "requestId", requestId, "error", err)
 		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
