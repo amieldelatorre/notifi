@@ -16,9 +16,21 @@ BEGIN
             ,userId                 INT
             ,title                  TEXT            NOT NULL
             ,body                   TEXT            NOT NULL
-            ,status                 varchar(255)    NOT NULL
+            ,status                 VARCHAR(255)    NOT NULL
             ,datetimeCreated        TIMESTAMPTZ     NOT NULL
-            ,datetimeSendAttempt    TIMESTAMPTZ     DEFAULT NULL
+            ,datetimeSendAttempt    TIMESTAMPTZ     NOT NULL
+            ,CONSTRAINT fk_userid
+                FOREIGN KEY(userId)
+                REFERENCES Users(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS Destinations (
+            id                      INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+            ,userId                 INT
+            ,type                   VARCHAR(255)
+            ,identifier             TEXT
+            ,datetimeCreated        TIMESTAMPTZ     NOT NULL
+            ,datetimeUpdated        TIMESTAMPTZ     NOT NULL
             ,CONSTRAINT fk_userid
                 FOREIGN KEY(userId)
                 REFERENCES Users(id)
