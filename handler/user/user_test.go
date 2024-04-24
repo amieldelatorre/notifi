@@ -161,7 +161,7 @@ func TestPostUser(t *testing.T) {
 		result := response.Result()
 
 		if result.StatusCode != tc.ExpectedStatusCode {
-			t.Fatalf("test case userId %s, expected status code %d, got %d", tc.UserInput.Email, tc.ExpectedStatusCode, result.StatusCode)
+			t.Fatalf("test case userEmail %s, expected status code %d, got %d", tc.UserInput.Email, tc.ExpectedStatusCode, result.StatusCode)
 		}
 
 		resultBody, err := io.ReadAll(result.Body)
@@ -178,7 +178,7 @@ func TestPostUser(t *testing.T) {
 
 		// Check if both are length of 0 as userHandler.getUser does omits the Errors if it is empty
 		if len(userResponse.Errors) != 0 && len(tc.ExpectedResponse.Errors) != 0 && !reflect.DeepEqual(userResponse.Errors, tc.ExpectedResponse.Errors) {
-			t.Fatalf("test case userId %s, expected response errors %+v, got %+v", tc.UserInput.Email, tc.ExpectedResponse.Errors, userResponse.Errors)
+			t.Fatalf("test case userEmail %s, expected response errors %+v, got %+v", tc.UserInput.Email, tc.ExpectedResponse.Errors, userResponse.Errors)
 		}
 
 		if userResponse.User != nil && tc.ExpectedResponse.User != nil && (userResponse.User.Id != tc.ExpectedResponse.User.Id || userResponse.User.Email != tc.ExpectedResponse.User.Email ||
@@ -193,7 +193,7 @@ func TestPostUser(t *testing.T) {
 			if err != nil {
 				t.Error(err)
 			}
-			t.Fatalf("test case userId %s, expected response user %+v, got %+v", tc.UserInput.Email, string(jsonExpectedUser), string(jsonResponseUser))
+			t.Fatalf("test case userEmail %s, expected response user %+v, got %+v", tc.UserInput.Email, string(jsonExpectedUser), string(jsonResponseUser))
 		}
 	}
 }
