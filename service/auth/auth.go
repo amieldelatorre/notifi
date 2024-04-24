@@ -48,7 +48,7 @@ func (s *Service) LoginUser(ctx context.Context, basicAuthCredentials BasicAuthC
 	user, err := s.Provider.GetUserByEmail(ctx, basicAuthCredentials.Email)
 	if err != nil && errors.Is(err, pgx.ErrNoRows) {
 		response.Errors["credentials"] = append(response.Errors["credentials"], "email and password combination not found.")
-		return http.StatusForbidden, response
+		return http.StatusUnauthorized, response
 	} else if err != nil {
 		s.Logger.Error("Could not get user from provider", "requestId", requestId, "error", err)
 		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
@@ -64,7 +64,7 @@ func (s *Service) LoginUser(ctx context.Context, basicAuthCredentials BasicAuthC
 
 	if !validLogin {
 		response.Errors["credentials"] = append(response.Errors["credentials"], "email/password combination not found.")
-		return http.StatusForbidden, response
+		return http.StatusUnauthorized, response
 	}
 
 	timeNow := time.Now()

@@ -153,7 +153,7 @@ func TestPostUser(t *testing.T) {
 		}
 
 		request := httptest.NewRequest(http.MethodPost, "/api/v1/user", bytes.NewReader(body))
-		request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+		request.Header.Set("Content-Type", "application/json")
 
 		response := httptest.NewRecorder()
 		mockUserHandler.postUser(response, request)
