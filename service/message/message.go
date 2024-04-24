@@ -1,4 +1,4 @@
-package message
+package message // import "github.com/amieldelatorre/notifi/service/message"
 
 import (
 	"context"
