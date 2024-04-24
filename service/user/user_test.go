@@ -17,8 +17,10 @@ import (
 
 func TestGetUserById(t *testing.T) {
 	logger := logger.New(io.Discard, slog.LevelWarn)
-	mockUserProvider := NewMockUserRepo()
-	service := New(logger, &mockUserProvider)
+	testDbInstance := NewTestDbInstance()
+	defer testDbInstance.CleanUp()
+
+	service := New(logger, testDbInstance.Provider)
 
 	testCases := GetValidTestGetUserByIdTestCases()
 	testCases = append(testCases, GetInvalidTestGetUserByIdTestCase())
@@ -44,8 +46,9 @@ func TestGetUserById(t *testing.T) {
 
 func TestGetUserByEmail(t *testing.T) {
 	logger := logger.New(io.Discard, slog.LevelWarn)
-	mockUserProvider := NewMockUserRepo()
-	service := New(logger, &mockUserProvider)
+	testDbInstance := NewTestDbInstance()
+	defer testDbInstance.CleanUp()
+	service := New(logger, testDbInstance.Provider)
 
 	tcs := []struct {
 		Email          string
@@ -53,9 +56,9 @@ func TestGetUserByEmail(t *testing.T) {
 		ExpectedResult model.User
 	}{
 		{
-			Email:          mockUserProvider.Users[1].Email,
+			Email:          GetTestUsers()[1].Email,
 			ExpectedError:  nil,
-			ExpectedResult: mockUserProvider.Users[1],
+			ExpectedResult: GetTestUsers()[1],
 		},
 		{
 			Email:          "email@notexist.invalid",
@@ -66,7 +69,8 @@ func TestGetUserByEmail(t *testing.T) {
 
 	for _, tc := range tcs {
 		actualResult, actualError := service.Provider.GetUserByEmail(context.Background(), tc.Email)
-		if actualResult != tc.ExpectedResult {
+		if actualResult.Email != tc.ExpectedResult.Email || actualResult.FirstName != tc.ExpectedResult.FirstName ||
+			actualResult.LastName != tc.ExpectedResult.LastName || actualResult.Password != tc.ExpectedResult.Password {
 			t.Fatalf("test case userId %s, expected response user %+v, got %+v", tc.Email, tc.ExpectedResult, actualResult)
 		}
 
@@ -78,8 +82,9 @@ func TestGetUserByEmail(t *testing.T) {
 
 func TestEmailExists(t *testing.T) {
 	logger := logger.New(io.Discard, slog.LevelWarn)
-	mockUserProvider := NewMockUserRepo()
-	service := New(logger, &mockUserProvider)
+	testDbInstance := NewTestDbInstance()
+	defer testDbInstance.CleanUp()
+	service := New(logger, testDbInstance.Provider)
 
 	tcs := []struct {
 		Email          string
@@ -87,7 +92,7 @@ func TestEmailExists(t *testing.T) {
 		ExpectedResult bool
 	}{
 		{
-			Email:          mockUserProvider.Users[1].Email,
+			Email:          GetTestUsers()[1].Email,
 			ExpectedError:  nil,
 			ExpectedResult: true,
 		},
@@ -112,8 +117,9 @@ func TestEmailExists(t *testing.T) {
 
 func TestValidateUserInput(t *testing.T) {
 	logger := logger.New(io.Discard, slog.LevelWarn)
-	mockUserProvider := NewMockUserRepo()
-	service := New(logger, &mockUserProvider)
+	testDbInstance := NewTestDbInstance()
+	defer testDbInstance.CleanUp()
+	service := New(logger, testDbInstance.Provider)
 
 	tcs := []struct {
 		UserInput                model.UserInput
@@ -123,34 +129,34 @@ func TestValidateUserInput(t *testing.T) {
 	}{
 		{
 			UserInput: model.UserInput{
-				Email:     mockUserProvider.Users[0].Email,
-				FirstName: mockUserProvider.Users[0].FirstName,
-				LastName:  mockUserProvider.Users[0].LastName,
-				Password:  mockUserProvider.Users[0].Password,
+				Email:     GetTestUsers()[0].Email,
+				FirstName: GetTestUsers()[0].FirstName,
+				LastName:  GetTestUsers()[0].LastName,
+				Password:  GetTestUsers()[0].Password,
 			},
 			ExpectedError:            nil,
 			ExpectedValidationErrors: map[string][]string{"email": {"Email already exists"}},
 			ExpectedCleanUserInput: model.UserInput{
-				Email:     mockUserProvider.Users[0].Email,
-				FirstName: mockUserProvider.Users[0].FirstName,
-				LastName:  mockUserProvider.Users[0].LastName,
-				Password:  mockUserProvider.Users[0].Password,
+				Email:     GetTestUsers()[0].Email,
+				FirstName: GetTestUsers()[0].FirstName,
+				LastName:  GetTestUsers()[0].LastName,
+				Password:  GetTestUsers()[0].Password,
 			},
 		},
 		{
 			UserInput: model.UserInput{
 				Email:     "email@notexist.invalid",
-				FirstName: mockUserProvider.Users[0].FirstName,
-				LastName:  mockUserProvider.Users[0].LastName,
-				Password:  mockUserProvider.Users[0].Password,
+				FirstName: GetTestUsers()[0].FirstName,
+				LastName:  GetTestUsers()[0].LastName,
+				Password:  GetTestUsers()[0].Password,
 			},
 			ExpectedError:            nil,
 			ExpectedValidationErrors: map[string][]string{},
 			ExpectedCleanUserInput: model.UserInput{
 				Email:     "email@notexist.invalid",
-				FirstName: mockUserProvider.Users[0].FirstName,
-				LastName:  mockUserProvider.Users[0].LastName,
-				Password:  mockUserProvider.Users[0].Password,
+				FirstName: GetTestUsers()[0].FirstName,
+				LastName:  GetTestUsers()[0].LastName,
+				Password:  GetTestUsers()[0].Password,
 			},
 		},
 	}
@@ -173,8 +179,9 @@ func TestValidateUserInput(t *testing.T) {
 
 func TestCreateUserInput(t *testing.T) {
 	logger := logger.New(io.Discard, slog.LevelWarn)
-	mockUserProvider := NewMockUserRepo()
-	service := New(logger, &mockUserProvider)
+	testDbInstance := NewTestDbInstance()
+	defer testDbInstance.CleanUp()
+	service := New(logger, testDbInstance.Provider)
 
 	tcs := []struct {
 		UserInput          model.UserInput
@@ -183,10 +190,10 @@ func TestCreateUserInput(t *testing.T) {
 	}{
 		{
 			UserInput: model.UserInput{
-				Email:     mockUserProvider.Users[0].Email,
-				FirstName: mockUserProvider.Users[0].FirstName,
-				LastName:  mockUserProvider.Users[0].LastName,
-				Password:  mockUserProvider.Users[0].Password,
+				Email:     GetTestUsers()[0].Email,
+				FirstName: GetTestUsers()[0].FirstName,
+				LastName:  GetTestUsers()[0].LastName,
+				Password:  GetTestUsers()[0].Password,
 			},
 			ExpectedStatusCode: http.StatusBadRequest,
 			ExpectedResponse: UserResponse{
@@ -222,7 +229,7 @@ func TestCreateUserInput(t *testing.T) {
 				Errors: map[string][]string{},
 				User: &model.User{
 					Email:           "isaac.newton@invalid.com",
-					Id:              len(mockUserProvider.Users) + 1,
+					Id:              len(GetTestUsers()) + 1,
 					FirstName:       "Isaac",
 					LastName:        "Newton",
 					Password:        "Password",

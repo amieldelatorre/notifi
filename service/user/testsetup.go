@@ -2,11 +2,17 @@ package user
 
 import (
 	"context"
+	"log"
 	"net/http"
+	"path/filepath"
 	"time"
 
 	"github.com/amieldelatorre/notifi/model"
-	"github.com/jackc/pgx/v5"
+	"github.com/amieldelatorre/notifi/repository"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
+	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 type MockUserProvider struct {
@@ -25,7 +31,7 @@ func GetTestUsers() []model.User {
 		Email:           "isaac.newton@example.invalid",
 		FirstName:       "Isaac",
 		LastName:        "Newton",
-		Password:        "Password",
+		Password:        "$argon2id$v=19$m=65536,t=1,p=11$V3dLd/hNnClN0U9mSu3IbQ$mcK9nxoJpUkWsWNbhX14tEC4pXp0oihqJQVePj7FFIc",
 		DatetimeCreated: time.Now(),
 		DatetimeUpdated: time.Now(),
 	}
@@ -35,7 +41,7 @@ func GetTestUsers() []model.User {
 		Email:           "alberteinstein@example.invalid",
 		FirstName:       "Albert",
 		LastName:        "Einstein",
-		Password:        "Password",
+		Password:        "$argon2id$v=19$m=65536,t=1,p=11$PQT2VdnSXGtAjLKmLHk7jA$hrclADmr/RTFGZgX0J2ujMmZg0adxhOOJczzp1YFMBk",
 		DatetimeCreated: time.Now(),
 		DatetimeUpdated: time.Now(),
 	}
@@ -43,43 +49,73 @@ func GetTestUsers() []model.User {
 	return users
 }
 
-func NewMockUserRepo() MockUserProvider {
-	return MockUserProvider{Users: GetTestUsers()}
+type TestDbProviderInstance struct {
+	DbPool    *pgxpool.Pool
+	Container postgres.PostgresContainer
+	Context   context.Context
+	Provider  UserProvider
 }
 
-func (mr *MockUserProvider) CreateUser(ctx context.Context, input model.UserInput) (model.User, error) {
-	id := len(mr.Users) + 1
-	newUser := model.User{
-		Id:              id,
-		Email:           input.Email,
-		FirstName:       input.FirstName,
-		LastName:        input.LastName,
-		Password:        input.Password,
-		DatetimeCreated: time.Now(),
-		DatetimeUpdated: time.Now(),
+func NewTestDbInstance() TestDbProviderInstance {
+	ctx := context.Background()
+
+	dbName := "notifi"
+	dbUser := "root"
+	dbPassword := "root"
+
+	postgresContainer, err := postgres.RunContainer(ctx,
+		testcontainers.WithImage("postgres"),
+		postgres.WithInitScripts(filepath.Join("../../migrations", "create_tables.sql")),
+		postgres.WithDatabase(dbName),
+		postgres.WithUsername(dbUser),
+		postgres.WithPassword(dbPassword),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(5*time.Second)),
+	)
+	if err != nil {
+		log.Fatalf("failed to start container: %s", err)
 	}
 
-	mr.Users = append(mr.Users, newUser)
-	return newUser, nil
-}
+	postgres_connection_string, err := postgresContainer.ConnectionString(ctx, "sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
 
-func (mr *MockUserProvider) GetUserById(ctx context.Context, id int) (model.User, error) {
-	for _, val := range mr.Users {
-		if val.Id == id {
-			return val, nil
+	dbPool, err := pgxpool.New(context.Background(), postgres_connection_string)
+	if err != nil {
+		panic(err)
+	}
+
+	tx, err := dbPool.Begin(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, tc := range GetTestUsers() {
+		_, err = dbPool.Exec(ctx,
+			`INSERT INTO Users (email, firstName, lastName, password, datetimeCreated, datetimeUpdated) 
+			VALUES ($1, $2, $3, $4, NOW(), NOW())`,
+			tc.Email, tc.FirstName, tc.LastName, tc.Password)
+
+		if err != nil {
+			tx.Rollback(ctx)
+			panic(err)
 		}
 	}
+	tx.Commit(ctx)
 
-	return model.User{}, pgx.ErrNoRows
+	provider := repository.NewUserPostgresProvider(dbPool)
+
+	return TestDbProviderInstance{DbPool: dbPool, Container: *postgresContainer, Context: ctx, Provider: provider}
 }
 
-func (mr *MockUserProvider) GetUserByEmail(ctx context.Context, email string) (model.User, error) {
-	for _, user := range mr.Users {
-		if user.Email == email {
-			return user, nil
-		}
+func (db *TestDbProviderInstance) CleanUp() {
+	// Clean up the container
+	if err := db.Container.Terminate(db.Context); err != nil {
+		log.Fatalf("failed to terminate container: %s", err)
 	}
-	return model.User{}, pgx.ErrNoRows
 }
 
 func GetValidTestGetUserByIdTestCases() []TestGetUserByIdTestCase {

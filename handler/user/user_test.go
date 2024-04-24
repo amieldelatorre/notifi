@@ -19,18 +19,19 @@ import (
 	"github.com/amieldelatorre/notifi/utils"
 )
 
-func GetNewMockUserHandler() UserHandler {
+func GetNewMockUserHandler() (UserHandler, userService.TestDbProviderInstance) {
 	logger := logger.New(io.Discard, slog.LevelWarn)
-	mockUserProvider := userService.NewMockUserRepo()
-	usrService := userService.New(logger, &mockUserProvider)
+	testDbInstance := userService.NewTestDbInstance()
+	usrService := userService.New(logger, testDbInstance.Provider)
 	jwtService := security.NewJwtService([]byte("super_secret_signing_key"))
 
 	mockUserHandler := New(logger, usrService, jwtService)
-	return mockUserHandler
+	return mockUserHandler, testDbInstance
 }
 
 func TestGetUser(t *testing.T) {
-	mockUserHandler := GetNewMockUserHandler()
+	mockUserHandler, testDbInstance := GetNewMockUserHandler()
+	defer testDbInstance.CleanUp()
 
 	testcases := userService.GetValidTestGetUserByIdTestCases()
 	testcases = append(testcases, userService.GetInvalidTestGetUserByIdTestCase())
@@ -85,7 +86,9 @@ func TestGetUser(t *testing.T) {
 }
 
 func TestPostUser(t *testing.T) {
-	mockUserHandler := GetNewMockUserHandler()
+	mockUserHandler, testDbInstance := GetNewMockUserHandler()
+	defer testDbInstance.CleanUp()
+
 	tcs := []struct {
 		UserInput          model.UserInput
 		ExpectedStatusCode int
