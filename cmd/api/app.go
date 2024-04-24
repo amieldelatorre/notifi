@@ -1,9 +1,15 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/amieldelatorre/notifi/common"
 	"github.com/amieldelatorre/notifi/logger"
@@ -23,6 +29,7 @@ type Application struct {
 	UserHandler userHandler.UserHandler
 	AuthHandler AuthHandler.AuthHandler
 	Logger      *slog.Logger
+	Server      *http.Server
 }
 
 func NewApp() Application {
@@ -46,11 +53,21 @@ func NewApp() Application {
 	usrHandler := userHandler.New(logger, userService.New(logger, usrProvider), jwtService)
 	authHandler := AuthHandler.New(logger, AuthService.New(logger, usrProvider, jwtService), jwtService)
 
+	mux := http.NewServeMux()
+	usrHandler.RegisterRoutes(mux)
+	authHandler.RegisterRoutes(mux)
+
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: mux,
+	}
+
 	app := Application{
 		DbPool:      dbPool,
 		UserHandler: usrHandler,
 		AuthHandler: authHandler,
 		Logger:      logger,
+		Server:      server,
 	}
 
 	return app
@@ -58,19 +75,37 @@ func NewApp() Application {
 
 func (app *Application) Exit() {
 	app.Logger.Info("Exiting application...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*15)
+	defer cancel()
+
+	app.Logger.Info("Shutting down server")
+	err := app.Server.Shutdown(ctx)
+	if err != nil {
+		app.Logger.Error("Error shutting down server", "error", err)
+	}
+
+	app.Logger.Info("Closing database connection")
 	app.DbPool.Close()
+
+	app.Logger.Info("Application has been shutdown, bye bye !")
 }
 
 func (app *Application) Run() {
-	app.Logger.Info("Attempting to start application...")
-	mux := http.NewServeMux()
+	stopChan := make(chan os.Signal, 1)
+	signal.Notify(stopChan, syscall.SIGTERM, syscall.SIGINT)
 
-	app.UserHandler.RegisterRoutes(mux)
-	app.AuthHandler.RegisterRoutes(mux)
+	go func() {
+		app.Logger.Info("Attempting to start application...")
+		app.Logger.Info(fmt.Sprintf("Starting application on port %s", app.Server.Addr))
+		err := app.Server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			app.Logger.Error("Something went wrong with the server", "error", err)
+		}
+	}()
 
-	app.Logger.Info("Starting application on port 8080")
-	err := http.ListenAndServe(":8080", mux)
-	if err != nil {
-		panic(err)
-	}
+	sig := <-stopChan
+
+	app.Logger.Info(fmt.Sprintf("Received signal '%+v', attempting to shutdown", sig))
+	app.Exit()
 }
