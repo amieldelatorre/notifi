@@ -26,7 +26,7 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 	h.Logger.Debug("Registering routes for the user handler")
 	m := middleware.New(h.Logger, h.JwtService)
 	getUserHandler := m.RecoverPanic(m.AddRequestId(m.RequireJwtToken(http.HandlerFunc(h.getUser))))
-	postUserHandler := m.RecoverPanic(m.AddRequestId(http.HandlerFunc(h.postUser)))
+	postUserHandler := m.RecoverPanic(m.AddRequestId(m.RequireApplicationJson(http.HandlerFunc(h.postUser))))
 
 	mux.Handle("POST /api/v1/user", postUserHandler)
 	mux.Handle("GET /api/v1/user", getUserHandler)

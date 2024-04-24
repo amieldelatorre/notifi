@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-type RequireJwtTokenErrors struct {
+type MiddlewareErrors struct {
 	Errors map[string][]string `json:"errors,omitempty"`
 }
 
@@ -58,7 +58,7 @@ func (m *Middleware) AddRequestId(next http.Handler) http.Handler {
 
 func (m *Middleware) RequireJwtToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		response := RequireJwtTokenErrors{
+		response := MiddlewareErrors{
 			Errors: make(map[string][]string),
 		}
 		requestId := r.Context().Value(utils.RequestIdName)
@@ -108,5 +108,24 @@ func (m *Middleware) RequireJwtToken(next http.Handler) http.Handler {
 
 		ctx := context.WithValue(r.Context(), utils.UserId, userClaims.UserId)
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (m *Middleware) RequireApplicationJson(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		response := MiddlewareErrors{
+			Errors: make(map[string][]string),
+		}
+		requestId := r.Context().Value(utils.RequestIdName)
+		m.Logger.Debug("Checking if request Content-Type is 'application/json'", "requestId", requestId)
+
+		contentTypeHeader := r.Header.Get("content-type")
+		if contentTypeHeader != "application/json" {
+			response.Errors["Content-Type"] = append(response.Errors["Content-Type"], "Content-Type unsupported, must be 'application/json'")
+			m.Logger.Debug("Content-Type header is not 'application/json'", "requestId", requestId)
+
+			w.WriteHeader(http.StatusUnsupportedMediaType)
+			json.NewEncoder(w).Encode(response)
+		}
 	})
 }

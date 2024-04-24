@@ -161,7 +161,7 @@ func TestRequireJwt(t *testing.T) {
 		result.Body.Close()
 
 		if tc.ExpectedStatusCode != http.StatusOK {
-			var jwtErrors RequireJwtTokenErrors
+			var jwtErrors MiddlewareErrors
 			err = json.Unmarshal(resultBody, &jwtErrors)
 			if err != nil {
 				t.Error(err)
@@ -172,5 +172,40 @@ func TestRequireJwt(t *testing.T) {
 			}
 		}
 
+	}
+}
+
+func TestRequireApplicationJson(t *testing.T) {
+	m := GetMockMiddleware()
+	mockNextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
+	tcs := []struct {
+		HeaderValue        string
+		ExpectedStatusCode int
+	}{
+		{
+			HeaderValue:        "application/json",
+			ExpectedStatusCode: http.StatusOK,
+		},
+		{
+			HeaderValue:        "notjson",
+			ExpectedStatusCode: http.StatusUnsupportedMediaType,
+		},
+	}
+
+	for tcn, tc := range tcs {
+		handler := m.RequireApplicationJson(mockNextHandler)
+		request := httptest.NewRequest("GET", "http://test.invalid", nil)
+		request.Header.Add("Content-Type", tc.HeaderValue)
+
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+		result := recorder.Result()
+
+		if result.StatusCode != tc.ExpectedStatusCode {
+			t.Fatalf("test case %d, expected status code '%d', got '%d'", tcn, tc.ExpectedStatusCode, result.StatusCode)
+		}
 	}
 }
