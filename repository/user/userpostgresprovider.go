@@ -17,7 +17,24 @@ func NewUserPostgresProvider(dbPool *pgxpool.Pool) *UserPostgresProvider {
 
 func (provider *UserPostgresProvider) CreateUser(ctx context.Context, input model.UserInput) (model.User, error) {
 	var newUser model.User
-	err := provider.DbPool.QueryRow(ctx, "INSERT INTO Users (email, firstName, lastName, password, datetimeCreated, datetimeUpdated) VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id, email, firstName, lastName, password, datetimeCreated, datetimeUpdated", input.Email, input.FirstName, input.LastName, input.Password).Scan(&newUser.Id, &newUser.Email, &newUser.FirstName, &newUser.LastName, &newUser.Password, &newUser.DatetimeCreated, &newUser.DatetimeUpdated)
+	tx, err := provider.DbPool.Begin(ctx)
+	if err != nil {
+		return newUser, err
+	}
+	defer tx.Rollback(ctx)
+
+	err = provider.DbPool.QueryRow(ctx,
+		`INSERT INTO Users (email, firstName, lastName, password, datetimeCreated, datetimeUpdated) 
+		VALUES ($1, $2, $3, $4, NOW(), NOW()) 
+		RETURNING id, email, firstName, lastName, password, datetimeCreated, datetimeUpdated`,
+		input.Email, input.FirstName, input.LastName, input.Password).Scan(
+		&newUser.Id, &newUser.Email, &newUser.FirstName, &newUser.LastName, &newUser.Password,
+		&newUser.DatetimeCreated, &newUser.DatetimeUpdated)
+	if err != nil {
+		return newUser, nil
+	}
+
+	err = tx.Commit(ctx)
 	return newUser, err
 }
 
