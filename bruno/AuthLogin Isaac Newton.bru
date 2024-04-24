@@ -1,0 +1,18 @@
+meta {
+  name: AuthLogin Isaac Newton
+  type: http
+  seq: 4
+}
+
+post {
+  url: http://localhost:8080/api/v1/auth/login
+  body: json
+  auth: bearer
+}
+
+body:json {
+  {
+    "Email": "isaac.newton@invalid.com",  
+    "Password": "password"
+  }
+}

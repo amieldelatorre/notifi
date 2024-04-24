@@ -1,0 +1,22 @@
+meta {
+  name: PostMessage Isaac Newton's Message
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:8080/api/v1/message
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJpc2FhYy5uZXd0b25AaW52YWxpZC5jb20iLCJpc3MiOiJOb3RpZmkiLCJzdWIiOiJBY2Nlc3NUb2tlbiIsImF1ZCI6WyJOb3RpZmkiXSwiZXhwIjoxNzE0NTUwODExLCJuYmYiOjE3MTM5NDYwMTEsImlhdCI6MTcxMzk0NjAxMSwianRpIjoiMDE4ZjBmMjQtYTc2Zi03ODFhLTliZmMtYjFmNzIzODBkNjI5In0._8_LIu67C7dF_TODtlUquZeyWKGZMYzPFLb_t9nrMI4
+}
+
+body:json {
+  {
+    "title": "MessageTitle",
+    "body": "MessageBody"
+  }
+}

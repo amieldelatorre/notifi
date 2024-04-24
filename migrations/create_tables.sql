@@ -2,13 +2,26 @@ DO $$
 BEGIN
     BEGIN
         CREATE TABLE IF NOT EXISTS Users (
-            id                  SERIAL 			PRIMARY KEY
-            ,email              VARCHAR(255) 	not NULL UNIQUE
-            ,firstName          varchar(255)	not NULL
-            ,lastName        	varchar(255)	not NULL
-            ,password			varchar(1000) 	not NULL
-            ,datetimeCreated    TIMESTAMPTZ 	not NULL
-            ,datetimeUpdated    TIMESTAMPTZ 	not NULL
+            id                  INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+            ,email              VARCHAR(255) 	NOT NULL UNIQUE
+            ,firstName          VARCHAR(255)    NOT NULL
+            ,lastName        	VARCHAR(255)    NOT NULL
+            ,password			VARCHAR(1000)   NOT NULL
+            ,datetimeCreated    TIMESTAMPTZ     NOT NULL
+            ,datetimeUpdated    TIMESTAMPTZ     NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS Messages (
+            id                      INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+            ,userId                 INT
+            ,title                  TEXT            NOT NULL
+            ,body                   TEXT            NOT NULL
+            ,status                 varchar(255)    NOT NULL
+            ,datetimeCreated        TIMESTAMPTZ     NOT NULL
+            ,datetimeSendAttempt    TIMESTAMPTZ     DEFAULT NULL
+            ,CONSTRAINT fk_userid
+                FOREIGN KEY(userId)
+                REFERENCES Users(id)
         );
         
     EXCEPTION

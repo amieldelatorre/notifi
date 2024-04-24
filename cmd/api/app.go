@@ -17,9 +17,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	AuthHandler "github.com/amieldelatorre/notifi/handler/auth"
+	messageHandler "github.com/amieldelatorre/notifi/handler/message"
 	userHandler "github.com/amieldelatorre/notifi/handler/user"
 	"github.com/amieldelatorre/notifi/repository"
 	AuthService "github.com/amieldelatorre/notifi/service/auth"
+	messageService "github.com/amieldelatorre/notifi/service/message"
 	"github.com/amieldelatorre/notifi/service/security"
 	userService "github.com/amieldelatorre/notifi/service/user"
 )
@@ -47,15 +49,20 @@ func NewApp() Application {
 
 	// TODO: Get signing key from environment variable
 	signingKey := []byte("super_secret_signing_key")
+
+	msgProvider := repository.NewMessagePostgresProvider(dbPool)
 	jwtService := security.NewJwtService(signingKey)
+	msgService := messageService.New(logger, msgProvider)
 
 	usrProvider := repository.NewUserPostgresProvider(dbPool)
 	usrHandler := userHandler.New(logger, userService.New(logger, usrProvider), jwtService)
 	authHandler := AuthHandler.New(logger, AuthService.New(logger, usrProvider, jwtService), jwtService)
+	msgHandler := messageHandler.New(logger, msgService, jwtService)
 
 	mux := http.NewServeMux()
 	usrHandler.RegisterRoutes(mux)
 	authHandler.RegisterRoutes(mux)
+	msgHandler.RegisterRoutes(mux)
 
 	server := &http.Server{
 		Addr:    ":8080",
