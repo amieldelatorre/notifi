@@ -22,5 +22,6 @@ go.work
 
 .env
 postgresql
+sqs/data
 
 api.exe

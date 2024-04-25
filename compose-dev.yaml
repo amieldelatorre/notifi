@@ -14,7 +14,16 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-root}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
       TZ: Pacific/Auckland
-
+  sqs:
+      image: softwaremill/elasticmq
+      container_name: sqs
+      restart: unless-stopped
+      ports:
+        - 9324:9324
+        - 9325:9325
+      volumes:
+        - ./sqs/custom.conf:/opt/elasticmq.conf
+        - ./sqs/data:/data
   
 
 # networks:
