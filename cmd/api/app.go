@@ -59,7 +59,7 @@ func NewApp() Application {
 	destProvider := repository.NewDestinationPostgresProvider(dbPool)
 
 	jwtService := security.NewJwtService(signingKey)
-	msgService := messageService.New(logger, msgProvider)
+	msgService := messageService.New(logger, msgProvider, destProvider)
 	destService := destinationService.New(logger, destProvider)
 
 	usrHandler := userHandler.New(logger, userService.New(logger, usrProvider), jwtService)

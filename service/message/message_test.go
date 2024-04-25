@@ -17,30 +17,36 @@ func TestCreateMessage(t *testing.T) {
 	logger := logger.New(io.Discard, slog.LevelWarn)
 	testDbInstance := NewTestDbInstance()
 	defer testDbInstance.CleanUp()
-	service := New(logger, testDbInstance.Provider)
+	service := New(logger, testDbInstance.Provider, testDbInstance.DestinationProvider)
 
 	tcs := []struct {
+		UserId             int
 		MessageInput       model.MessageInput
 		ExpectedStatusCode int
 		ExpectedResponse   Response
 	}{
 		{
+			UserId: 1,
 			MessageInput: model.MessageInput{
-				Title: "",
-				Body:  "",
+				Title:         "",
+				Body:          "",
+				DestinationId: nil,
 			},
 			ExpectedStatusCode: http.StatusBadRequest,
 			ExpectedResponse: Response{
 				Errors: map[string][]string{
-					"title": {"Must have at least one non-whitespace character"},
-					"body":  {"Must have at least one non-whitespace character"},
+					"title":         {"Must have at least one non-whitespace character"},
+					"body":          {"Must have at least one non-whitespace character"},
+					"destinationId": {"Must be a valid Destination Id"},
 				},
 			},
 		},
 		{
+			UserId: 1,
 			MessageInput: model.MessageInput{
-				Title: "MessageTitle",
-				Body:  "MessageBody",
+				Title:         "MessageTitle",
+				Body:          "MessageBody",
+				DestinationId: func(val int) *int { return &val }(1),
 			},
 			ExpectedStatusCode: http.StatusCreated,
 			ExpectedResponse: Response{
@@ -54,10 +60,52 @@ func TestCreateMessage(t *testing.T) {
 				},
 			},
 		},
+		{
+			UserId: 1,
+			MessageInput: model.MessageInput{
+				Title:         "MessageTitle",
+				Body:          "MessageBody",
+				DestinationId: func(val int) *int { return &val }(3),
+			},
+			ExpectedStatusCode: http.StatusBadRequest,
+			ExpectedResponse: Response{
+				Errors: map[string][]string{
+					"destinationId": {"Destination Id cannot be found"},
+				},
+				Message: &model.Message{
+					Id:     1,
+					UserId: 1,
+					Title:  "MessageTitle",
+					Body:   "MessageBody",
+					Status: model.MessageStatusPending,
+				},
+			},
+		},
+		{
+			UserId: 2,
+			MessageInput: model.MessageInput{
+				Title:         "MessageTitle",
+				Body:          "MessageBody",
+				DestinationId: func(val int) *int { return &val }(1),
+			},
+			ExpectedStatusCode: http.StatusBadRequest,
+			ExpectedResponse: Response{
+				Errors: map[string][]string{
+					"destinationId": {"Destination Id cannot be found"},
+				},
+				Message: &model.Message{
+					Id:     1,
+					UserId: 2,
+					Title:  "MessageTitle",
+					Body:   "MessageBody",
+					Status: model.MessageStatusPending,
+				},
+			},
+		},
 	}
 
 	for tcn, tc := range tcs {
-		ctx := context.WithValue(context.Background(), utils.UserId, 1)
+		ctx := context.WithValue(context.Background(), utils.UserId, tc.UserId)
 		actualStatusCode, actualResponse := service.CreateMessage(ctx, tc.MessageInput)
 		if actualStatusCode != tc.ExpectedStatusCode {
 			t.Fatalf("test case number %d, expected response %d, got %d", tcn, tc.ExpectedStatusCode, actualStatusCode)

@@ -36,7 +36,9 @@ func (h *MessageHandler) postMessage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var messageInput model.MessageInput
-	var response messageService.Response
+	response := messageService.Response{
+		Errors: map[string][]string{},
+	}
 
 	err := json.NewDecoder(r.Body).Decode(&messageInput)
 	if err != nil {

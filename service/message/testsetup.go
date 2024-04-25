@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/amieldelatorre/notifi/model"
 	"github.com/amieldelatorre/notifi/repository"
 	userService "github.com/amieldelatorre/notifi/service/user"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -15,10 +16,11 @@ import (
 )
 
 type TestDbProviderInstance struct {
-	DbPool    *pgxpool.Pool
-	Container postgres.PostgresContainer
-	Context   context.Context
-	Provider  MessageProvider
+	DbPool              *pgxpool.Pool
+	Container           postgres.PostgresContainer
+	Context             context.Context
+	Provider            MessageProvider
+	DestinationProvider DestinationProvider
 }
 
 func NewTestDbInstance() TestDbProviderInstance {
@@ -68,12 +70,23 @@ func NewTestDbInstance() TestDbProviderInstance {
 			tx.Rollback(ctx)
 			panic(err)
 		}
+
+		_, err = dbPool.Exec(ctx,
+			`INSERT INTO Destinations (userId, type, identifier, datetimeCreated, datetimeUpdated) 
+			VALUES ($1, $2, $3, NOW(), NOW())`,
+			1, model.DestinationTypeDiscord, "https://one.example.discord.webhook.invalid")
+		if err != nil {
+			tx.Rollback(ctx)
+			panic(err)
+		}
 	}
+
 	tx.Commit(ctx)
 
 	provider := repository.NewMessagePostgresProvider(dbPool)
+	destinationProvider := repository.NewDestinationPostgresProvider(dbPool)
 
-	return TestDbProviderInstance{DbPool: dbPool, Container: *postgresContainer, Context: ctx, Provider: provider}
+	return TestDbProviderInstance{DbPool: dbPool, Container: *postgresContainer, Context: ctx, Provider: provider, DestinationProvider: destinationProvider}
 }
 
 func (db *TestDbProviderInstance) CleanUp() {

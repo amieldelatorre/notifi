@@ -24,11 +24,11 @@ func (p *MessagePostgresProvider) CreateMessage(ctx context.Context, input model
 	defer tx.Rollback(ctx)
 
 	err = p.DbPool.QueryRow(ctx,
-		`INSERT INTO Messages (userId, title, body, status, datetimeCreated, datetimeSendAttempt) 
-		VALUES ($1, $2, $3, $4, NOW(), NOW()) 
-		RETURNING id, userId, title, body, status, datetimeCreated, datetimeSendAttempt`,
-		input.UserId, input.Title, input.Body, model.MessageStatusPending).Scan(
-		&newMessage.Id, &newMessage.UserId, &newMessage.Title, &newMessage.Body, &newMessage.Status,
+		`INSERT INTO Messages (userId, destinationId, title, body, status, datetimeCreated, datetimeSendAttempt) 
+		VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) 
+		RETURNING id, destinationId, userId, title, body, status, datetimeCreated, datetimeSendAttempt`,
+		input.UserId, input.DestinationId, input.Title, input.Body, model.MessageStatusPending).Scan(
+		&newMessage.Id, &newMessage.DestinationId, &newMessage.UserId, &newMessage.Title, &newMessage.Body, &newMessage.Status,
 		&newMessage.DatetimeCreated, &newMessage.DatetimeSendAttempt)
 	if err != nil {
 		return newMessage, err

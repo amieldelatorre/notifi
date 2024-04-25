@@ -7,8 +7,11 @@ BEGIN
         INSERT INTO Users (email, firstName, lastName, password, datetimeCreated, datetimeUpdated) 
 		VALUES ('alberteinstein@example.invalid', 'Albert', 'Einstein', '$argon2id$v=19$m=65536,t=1,p=11$PQT2VdnSXGtAjLKmLHk7jA$hrclADmr/RTFGZgX0J2ujMmZg0adxhOOJczzp1YFMBk', NOW(), NOW());
 
-        INSERT INTO Messages (userId, title, body, status, datetimeCreated, datetimeSendAttempt)
-        VALUES (1, 'MessageTitle', 'MessageBody', 'PENDING', NOW(), NOW());
+        INSERT INTO Destinations (userId, type, identifier, datetimeCreated, datetimeUpdated) 
+        VALUES (1, 'DISCORD', 'https://one.example.discord.webhook.invalid', NOW(), NOW());
+
+        INSERT INTO Messages (userId, destinationId, title, body, status, datetimeCreated, datetimeSendAttempt)
+        VALUES (1, 1, 'MessageTitle', 'MessageBody', 'PENDING', NOW(), NOW());
     EXCEPTION
         WHEN OTHERS THEN
             RAISE NOTICE 'Error: %', SQLERRM;

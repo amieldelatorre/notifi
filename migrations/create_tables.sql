@@ -11,9 +11,22 @@ BEGIN
             ,datetimeUpdated    TIMESTAMPTZ     NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS Destinations (
+            id                      INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+            ,userId                 INT             NOT NULL
+            ,type                   VARCHAR(255)    NOT NULL
+            ,identifier             TEXT            NOT NULL
+            ,datetimeCreated        TIMESTAMPTZ     NOT NULL
+            ,datetimeUpdated        TIMESTAMPTZ     NOT NULL
+            ,CONSTRAINT fk_userid
+                FOREIGN KEY(userId)
+                REFERENCES Users(id)
+        );
+
         CREATE TABLE IF NOT EXISTS Messages (
             id                      INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-            ,userId                 INT
+            ,userId                 INT             NOT NULL
+            ,destinationId          INT             NOT NULL
             ,title                  TEXT            NOT NULL
             ,body                   TEXT            NOT NULL
             ,status                 VARCHAR(255)    NOT NULL
@@ -22,18 +35,9 @@ BEGIN
             ,CONSTRAINT fk_userid
                 FOREIGN KEY(userId)
                 REFERENCES Users(id)
-        );
-
-        CREATE TABLE IF NOT EXISTS Destinations (
-            id                      INT             GENERATED ALWAYS AS IDENTITY PRIMARY KEY
-            ,userId                 INT
-            ,type                   VARCHAR(255)
-            ,identifier             TEXT
-            ,datetimeCreated        TIMESTAMPTZ     NOT NULL
-            ,datetimeUpdated        TIMESTAMPTZ     NOT NULL
-            ,CONSTRAINT fk_userid
-                FOREIGN KEY(userId)
-                REFERENCES Users(id)
+            ,CONSTRAINT fk_destinationId
+                FOREIGN KEY(destinationId)
+                REFERENCES Destinations(id)
         );
         
     EXCEPTION

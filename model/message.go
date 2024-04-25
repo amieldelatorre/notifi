@@ -16,6 +16,7 @@ const (
 type Message struct {
 	Id                  int           `json:"id"`
 	UserId              int           `json:"userId"`
+	DestinationId       int           `json:"destinationId"`
 	Title               string        `json:"title"`
 	Body                string        `json:"body"`
 	Status              MessageStatus `json:"status"`
@@ -24,16 +25,18 @@ type Message struct {
 }
 
 type MessageInput struct {
-	Title string `json:"title"`
-	Body  string `json:"body"`
+	Title         string `json:"title"`
+	Body          string `json:"body"`
+	DestinationId *int   `json:"destinationId"`
 }
 
 func (m *MessageInput) Validate() (MessageInput, map[string][]string) {
 	validationErrors := make(map[string][]string)
 
 	cleanInput := MessageInput{
-		Title: m.Title,
-		Body:  m.Body,
+		Title:         m.Title,
+		Body:          m.Body,
+		DestinationId: m.DestinationId,
 	}
 
 	if strings.TrimSpace(m.Title) == "" {
@@ -42,6 +45,10 @@ func (m *MessageInput) Validate() (MessageInput, map[string][]string) {
 
 	if strings.TrimSpace(m.Body) == "" {
 		validationErrors["body"] = append(validationErrors["body"], "Must have at least one non-whitespace character")
+	}
+
+	if cleanInput.DestinationId == nil {
+		validationErrors["destinationId"] = append(validationErrors["destinationId"], "Must be a valid Destination Id")
 	}
 
 	return cleanInput, validationErrors

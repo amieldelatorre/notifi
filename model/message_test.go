@@ -29,12 +29,14 @@ func TestMessageInputValidate(t *testing.T) {
 func GetMessageInputTestCases() []MessageInputTestCase {
 	tc1 := MessageInputTestCase{
 		MessageInput: MessageInput{
-			Title: "",
-			Body:  "",
+			Title:         "",
+			Body:          "",
+			DestinationId: nil,
 		},
 		ExpectedResponseErrors: map[string][]string{
-			"title": {"Must have at least one non-whitespace character"},
-			"body":  {"Must have at least one non-whitespace character"},
+			"title":         {"Must have at least one non-whitespace character"},
+			"body":          {"Must have at least one non-whitespace character"},
+			"destinationId": {"Must be a valid Destination Id"},
 		},
 		ExpectedCleanInput: MessageInput{
 			Title: "",
@@ -44,13 +46,15 @@ func GetMessageInputTestCases() []MessageInputTestCase {
 
 	tc2 := MessageInputTestCase{
 		MessageInput: MessageInput{
-			Title: "s",
-			Body:  "s",
+			Title:         "s",
+			Body:          "s",
+			DestinationId: func(val int) *int { return &val }(10),
 		},
 		ExpectedResponseErrors: map[string][]string{},
 		ExpectedCleanInput: MessageInput{
-			Title: "s",
-			Body:  "s",
+			Title:         "s",
+			Body:          "s",
+			DestinationId: func(val int) *int { return &val }(10),
 		},
 	}
 
