@@ -1,22 +1,15 @@
 meta {
-  name: PostDestination Isaac Newton's Destination
+  name: GestDestinations Isaac Newton's Destinations
   type: http
-  seq: 8
+  seq: 9
 }
 
-post {
+get {
   url: http://localhost:8080/api/v1/destination
-  body: json
+  body: none
   auth: bearer
 }
 
 auth:bearer {
   token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJpc2FhYy5uZXd0b25AaW52YWxpZC5jb20iLCJpc3MiOiJOb3RpZmkiLCJzdWIiOiJBY2Nlc3NUb2tlbiIsImF1ZCI6WyJOb3RpZmkiXSwiZXhwIjoxNzE0NTUwODExLCJuYmYiOjE3MTM5NDYwMTEsImlhdCI6MTcxMzk0NjAxMSwianRpIjoiMDE4ZjBmMjQtYTc2Zi03ODFhLTliZmMtYjFmNzIzODBkNjI5In0._8_LIu67C7dF_TODtlUquZeyWKGZMYzPFLb_t9nrMI4
-}
-
-body:json {
-  {
-    "type": "DISCORD",
-    "identifier": "MessageBody2"
-  }
 }

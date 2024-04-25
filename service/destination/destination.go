@@ -11,11 +11,17 @@ import (
 
 type DestinationProvider interface {
 	CreateDestination(ctx context.Context, input model.Destination) (model.Destination, error)
+	GetDestinations(ctx context.Context, userId int) ([]model.Destination, error)
 }
 
 type Response struct {
 	Destination *model.Destination  `json:"destination,omitempty"`
 	Errors      map[string][]string `json:"errors,omitempty"`
+}
+
+type GetAllResponse struct {
+	Destinations []model.Destination `json:"destinations"`
+	Errors       map[string][]string `json:"errors,omitempty"`
 }
 
 type Service struct {
@@ -56,6 +62,24 @@ func (s *Service) CreateDestination(ctx context.Context, input model.Destination
 	response.Destination = &newDestination
 
 	return http.StatusCreated, response
+}
+
+func (s *Service) GetAllDestinations(ctx context.Context, userId int) (int, GetAllResponse) {
+	requestId := ctx.Value(utils.RequestIdName)
+	response := GetAllResponse{
+		Errors: make(map[string][]string),
+	}
+
+	destinations, err := s.Provider.GetDestinations(ctx, userId)
+	if err != nil {
+		s.Logger.Error("Could not get destinations from provider", "requestId", requestId, "error", err)
+		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
+		return http.StatusInternalServerError, response
+	}
+
+	response.Destinations = destinations
+
+	return http.StatusOK, response
 }
 
 func (s *Service) validateDestinationInput(input model.DestinationInput) (model.DestinationInput, map[string][]string) {

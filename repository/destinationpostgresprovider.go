@@ -37,3 +37,29 @@ func (p *DestinationPostgresProvider) CreateDestination(ctx context.Context, inp
 	err = tx.Commit(ctx)
 	return newDestination, err
 }
+
+func (p *DestinationPostgresProvider) GetDestinations(ctx context.Context, userId int) ([]model.Destination, error) {
+	var destinations []model.Destination
+
+	rows, err := p.DbPool.Query(ctx, `SELECT * FROM Destinations WHERE userId = $1`, userId)
+	if err != nil {
+		return destinations, err
+	}
+
+	for rows.Next() {
+		var dest model.Destination
+
+		err := rows.Scan(&dest.Id, &dest.UserId, &dest.Type, &dest.Identifier, &dest.DatetimeCreated, &dest.DatetimeUpdated)
+		if err != nil {
+			return destinations, err
+		}
+
+		destinations = append(destinations, dest)
+	}
+
+	if err := rows.Err(); err != nil {
+		return destinations, err
+	}
+
+	return destinations, nil
+}

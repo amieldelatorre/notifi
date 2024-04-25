@@ -26,8 +26,10 @@ func (h *DestinationHandler) RegisterRoutes(mux *http.ServeMux) {
 	h.Logger.Debug("Registering routes for the destination handler")
 	m := middleware.New(h.Logger, h.JwtService)
 	postDestinationHandlerFunc := m.RecoverPanic(m.AddRequestId(m.RequireJwtToken(m.RequireApplicationJson(http.HandlerFunc(h.postDestination)))))
+	getDestinationsHandlerFunc := m.RecoverPanic(m.AddRequestId(m.RequireJwtToken((http.HandlerFunc(h.getDestinations)))))
 
 	mux.Handle("POST /api/v1/destination", postDestinationHandlerFunc)
+	mux.Handle("GET /api/v1/destination", getDestinationsHandlerFunc)
 }
 
 func (h *DestinationHandler) postDestination(w http.ResponseWriter, r *http.Request) {
@@ -61,4 +63,18 @@ func (h *DestinationHandler) postDestination(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(response)
 	h.Logger.Info("Post Destination", "requestId", requestId, "responseStatusCode", statusCode)
+}
+
+func (h *DestinationHandler) getDestinations(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	requestId := ctx.Value(utils.RequestIdName)
+	h.Logger.Debug("Retrieving destinations", "requestId", requestId)
+	w.Header().Set("Content-Type", "application/json")
+
+	userId := ctx.Value(utils.UserId).(int)
+
+	statusCode, response := h.Service.GetAllDestinations(ctx, userId)
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(response)
+	h.Logger.Info("Get Destinations", "requestId", requestId, "responseStatusCode", statusCode)
 }

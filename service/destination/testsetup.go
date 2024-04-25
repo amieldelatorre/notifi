@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/amieldelatorre/notifi/model"
 	"github.com/amieldelatorre/notifi/repository"
 	userService "github.com/amieldelatorre/notifi/service/user"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -69,6 +70,18 @@ func NewTestDbInstance() TestDbProviderInstance {
 			panic(err)
 		}
 	}
+
+	for _, tc := range GetTestDestinations() {
+		_, err = dbPool.Exec(ctx,
+			`INSERT INTO Destinations (userId, type, identifier, datetimeCreated, datetimeUpdated) 
+			VALUES ($1, $2, $3, NOW(), NOW())`,
+			tc.UserId, tc.Type, tc.Identifier)
+
+		if err != nil {
+			tx.Rollback(ctx)
+			panic(err)
+		}
+	}
 	tx.Commit(ctx)
 
 	provider := repository.NewDestinationPostgresProvider(dbPool)
@@ -81,4 +94,26 @@ func (db *TestDbProviderInstance) CleanUp() {
 	if err := db.Container.Terminate(db.Context); err != nil {
 		log.Fatalf("failed to terminate container: %s", err)
 	}
+}
+
+func GetTestDestinations() []model.Destination {
+	destinations := []model.Destination{
+		{
+			Id:              1,
+			UserId:          1,
+			Type:            model.DestinationTypeDiscord,
+			Identifier:      "https://one.example.discord.webhook.invalid",
+			DatetimeCreated: time.Now(),
+			DatetimeUpdated: time.Now(),
+		},
+		{
+			Id:              2,
+			UserId:          1,
+			Type:            model.DestinationTypeDiscord,
+			Identifier:      "https://two.example.discord.webhook.invalid",
+			DatetimeCreated: time.Now(),
+			DatetimeUpdated: time.Now(),
+		},
+	}
+	return destinations
 }
