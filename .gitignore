@@ -23,5 +23,4 @@ go.work
 .env
 postgresql
 
-api
 api.exe

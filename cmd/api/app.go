@@ -17,21 +17,25 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	AuthHandler "github.com/amieldelatorre/notifi/handler/auth"
+	destinationHandler "github.com/amieldelatorre/notifi/handler/destination"
 	messageHandler "github.com/amieldelatorre/notifi/handler/message"
 	userHandler "github.com/amieldelatorre/notifi/handler/user"
 	"github.com/amieldelatorre/notifi/repository"
 	AuthService "github.com/amieldelatorre/notifi/service/auth"
+	destinationService "github.com/amieldelatorre/notifi/service/destination"
 	messageService "github.com/amieldelatorre/notifi/service/message"
 	"github.com/amieldelatorre/notifi/service/security"
 	userService "github.com/amieldelatorre/notifi/service/user"
 )
 
 type Application struct {
-	DbPool      *pgxpool.Pool
-	UserHandler userHandler.UserHandler
-	AuthHandler AuthHandler.AuthHandler
-	Logger      *slog.Logger
-	Server      *http.Server
+	DbPool             *pgxpool.Pool
+	UserHandler        userHandler.UserHandler
+	AuthHandler        AuthHandler.AuthHandler
+	MessageHandler     messageHandler.MessageHandler
+	DestinationHandler destinationHandler.DestinationHandler
+	Logger             *slog.Logger
+	Server             *http.Server
 }
 
 func NewApp() Application {
@@ -50,19 +54,24 @@ func NewApp() Application {
 	// TODO: Get signing key from environment variable
 	signingKey := []byte("super_secret_signing_key")
 
+	usrProvider := repository.NewUserPostgresProvider(dbPool)
 	msgProvider := repository.NewMessagePostgresProvider(dbPool)
+	destProvider := repository.NewDestinationPostgresProvider(dbPool)
+
 	jwtService := security.NewJwtService(signingKey)
 	msgService := messageService.New(logger, msgProvider)
+	destService := destinationService.New(logger, destProvider)
 
-	usrProvider := repository.NewUserPostgresProvider(dbPool)
 	usrHandler := userHandler.New(logger, userService.New(logger, usrProvider), jwtService)
 	authHandler := AuthHandler.New(logger, AuthService.New(logger, usrProvider, jwtService), jwtService)
 	msgHandler := messageHandler.New(logger, msgService, jwtService)
+	destHandler := destinationHandler.New(logger, destService, jwtService)
 
 	mux := http.NewServeMux()
 	usrHandler.RegisterRoutes(mux)
 	authHandler.RegisterRoutes(mux)
 	msgHandler.RegisterRoutes(mux)
+	destHandler.RegisterRoutes(mux)
 
 	server := &http.Server{
 		Addr:    ":8080",
@@ -70,11 +79,13 @@ func NewApp() Application {
 	}
 
 	app := Application{
-		DbPool:      dbPool,
-		UserHandler: usrHandler,
-		AuthHandler: authHandler,
-		Logger:      logger,
-		Server:      server,
+		DbPool:             dbPool,
+		UserHandler:        usrHandler,
+		AuthHandler:        authHandler,
+		MessageHandler:     msgHandler,
+		DestinationHandler: destHandler,
+		Logger:             logger,
+		Server:             server,
 	}
 
 	return app
