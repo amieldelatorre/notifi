@@ -63,3 +63,12 @@ func (p *DestinationPostgresProvider) GetDestinations(ctx context.Context, userI
 
 	return destinations, nil
 }
+
+func (p *DestinationPostgresProvider) GetDestinationById(ctx context.Context, destinationId int, userId int) (model.Destination, error) {
+	var destination model.Destination
+
+	// Destination Id's should be unique when querying the destination table
+	err := p.DbPool.QueryRow(ctx, "SELECT * FROM Destinations WHERE id = $1 and userId = $2", destinationId, userId).Scan(
+		&destination.Id, &destination.UserId, &destination.Type, &destination.Identifier, &destination.DatetimeCreated, &destination.DatetimeUpdated)
+	return destination, err
+}

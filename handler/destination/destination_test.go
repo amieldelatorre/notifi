@@ -213,3 +213,125 @@ func TestGetDestinations(t *testing.T) {
 		}
 	}
 }
+
+func TestGetDestinationById(t *testing.T) {
+	mockDestinationHandler, testDbInstance := GetNewMockDestinationHandler()
+	defer testDbInstance.CleanUp()
+
+	tcs := []struct {
+		DestinationId      string
+		UserId             int
+		ExpectedStatusCode int
+		ExpectedResponse   destinationService.Response
+	}{
+		{
+			DestinationId:      "1",
+			UserId:             2,
+			ExpectedStatusCode: http.StatusNotFound,
+			ExpectedResponse: destinationService.Response{
+				Destination: nil,
+				Errors: map[string][]string{
+					"destination": {"Destination not found"},
+				},
+			},
+		},
+		{
+			DestinationId:      "3",
+			UserId:             1,
+			ExpectedStatusCode: http.StatusNotFound,
+			ExpectedResponse: destinationService.Response{
+				Destination: nil,
+				Errors: map[string][]string{
+					"destination": {"Destination not found"},
+				},
+			},
+		},
+		{
+			DestinationId:      "invalid",
+			UserId:             1,
+			ExpectedStatusCode: http.StatusBadRequest,
+			ExpectedResponse: destinationService.Response{
+				Destination: nil,
+				Errors: map[string][]string{
+					"id": {"Invalid destination Id provided. Must be an integer"},
+				},
+			},
+		},
+		{
+			DestinationId:      "1",
+			UserId:             1,
+			ExpectedStatusCode: http.StatusOK,
+			ExpectedResponse: destinationService.Response{
+				Destination: &model.Destination{
+					Id:              1,
+					UserId:          1,
+					Type:            model.DestinationTypeDiscord,
+					Identifier:      "https://one.example.discord.webhook.invalid",
+					DatetimeCreated: time.Now(),
+					DatetimeUpdated: time.Now(),
+				},
+				Errors: map[string][]string{},
+			},
+		},
+	}
+
+	for tcn, tc := range tcs {
+		request := httptest.NewRequest(http.MethodGet, "/api/v1/destination", nil)
+		request.SetPathValue("id", tc.DestinationId)
+		ctx := request.Context()
+		ctx = context.WithValue(ctx, utils.UserId, tc.UserId)
+		request = request.WithContext(ctx)
+
+		response := httptest.NewRecorder()
+		mockDestinationHandler.getDestinationById(response, request)
+
+		result := response.Result()
+
+		if result.StatusCode != tc.ExpectedStatusCode {
+			t.Fatalf("test case number %d, expected response %d, got %d", tcn, tc.ExpectedStatusCode, result.StatusCode)
+		}
+
+		resultBody, err := io.ReadAll(result.Body)
+		if err != nil {
+			t.Error(err)
+		}
+		result.Body.Close()
+
+		var destResponse destinationService.Response
+		err = json.Unmarshal(resultBody, &destResponse)
+		if err != nil {
+			t.Error(err)
+		}
+
+		if len(destResponse.Errors) != 0 && len(tc.ExpectedResponse.Errors) != 0 && !reflect.DeepEqual(destResponse.Errors, tc.ExpectedResponse.Errors) {
+			t.Fatalf("test case number %d, expected response errors %+v, got %+v", tcn, tc.ExpectedResponse.Errors, destResponse.Errors)
+		}
+
+		if destResponse.Destination != nil && tc.ExpectedResponse.Destination != nil && (destResponse.Destination.Id != tc.ExpectedResponse.Destination.Id ||
+			destResponse.Destination.UserId != tc.ExpectedResponse.Destination.UserId || destResponse.Destination.Identifier != tc.ExpectedResponse.Destination.Identifier) {
+			t.Fatalf("test case number %d, expected response user %+v, got %+v", tcn, tc.ExpectedResponse.Destination, destResponse.Destination)
+		}
+
+		// resultBody, err := io.ReadAll(result.Body)
+		// if err != nil {
+		// 	t.Error(err)
+		// }
+		// result.Body.Close()
+
+		// ctx := context.Background()
+		// actualStatusCode, actualResponse := service.GetDestinationById(ctx, tc.DestinationId, tc.UserId)
+		// if actualStatusCode != tc.ExpectedStatusCode {
+		// 	t.Fatalf("test case number %d, expected response %d, got %d", tcn, tc.ExpectedStatusCode, actualStatusCode)
+		// }
+
+		// if !reflect.DeepEqual(actualResponse.Errors, tc.ExpectedResponse.Errors) {
+		// 	t.Fatalf("test case number %d, expected response %+v, got %+v", tcn, tc.ExpectedResponse, actualResponse)
+		// }
+
+		// if actualResponse.Destination != nil && tc.ExpectedResponse.Destination != nil && (actualResponse.Destination.Id != tc.ExpectedResponse.Destination.Id ||
+		// 	actualResponse.Destination.UserId != tc.ExpectedResponse.Destination.UserId || actualResponse.Destination.Type != tc.ExpectedResponse.Destination.Type ||
+		// 	actualResponse.Destination.Identifier != tc.ExpectedResponse.Destination.Identifier) {
+		// 	t.Fatalf("test case number %d, expected response %+v, got %+v", tcn, tc.ExpectedResponse.Destination, actualResponse.Destination)
+		// }
+	}
+}

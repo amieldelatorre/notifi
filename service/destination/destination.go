@@ -2,16 +2,19 @@ package destination // import "github.com/amieldelatorre/notifi/service/destinat
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 
 	"github.com/amieldelatorre/notifi/model"
 	"github.com/amieldelatorre/notifi/utils"
+	"github.com/jackc/pgx/v5"
 )
 
 type DestinationProvider interface {
 	CreateDestination(ctx context.Context, input model.Destination) (model.Destination, error)
 	GetDestinations(ctx context.Context, userId int) ([]model.Destination, error)
+	GetDestinationById(ctx context.Context, destinationId int, userId int) (model.Destination, error)
 }
 
 type Response struct {
@@ -79,6 +82,26 @@ func (s *Service) GetAllDestinations(ctx context.Context, userId int) (int, GetA
 
 	response.Destinations = destinations
 
+	return http.StatusOK, response
+}
+
+func (s *Service) GetDestinationById(ctx context.Context, destinationId int, userId int) (int, Response) {
+	requestId := ctx.Value(utils.RequestIdName)
+	response := Response{
+		Errors: make(map[string][]string),
+	}
+
+	destination, err := s.Provider.GetDestinationById(ctx, destinationId, userId)
+	if err != nil && errors.Is(err, pgx.ErrNoRows) {
+		response.Errors["destination"] = append(response.Errors["destination"], "Destination not found")
+		return http.StatusNotFound, response
+	} else if err != nil {
+		s.Logger.Error("Could not get destination from provider", "requestId", requestId, "error", err)
+		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
+		return http.StatusInternalServerError, response
+	}
+
+	response.Destination = &destination
 	return http.StatusOK, response
 }
 

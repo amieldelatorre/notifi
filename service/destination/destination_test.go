@@ -161,3 +161,74 @@ func TestGetAllDestinations(t *testing.T) {
 		}
 	}
 }
+
+func TestGetDestinationById(t *testing.T) {
+	logger := logger.New(io.Discard, slog.LevelWarn)
+	testDbInstance := NewTestDbInstance()
+	defer testDbInstance.CleanUp()
+	service := New(logger, testDbInstance.Provider)
+
+	tcs := []struct {
+		DestinationId      int
+		UserId             int
+		ExpectedStatusCode int
+		ExpectedResponse   Response
+	}{
+		{
+			DestinationId:      1,
+			UserId:             2,
+			ExpectedStatusCode: http.StatusNotFound,
+			ExpectedResponse: Response{
+				Destination: nil,
+				Errors: map[string][]string{
+					"destination": {"Destination not found"},
+				},
+			},
+		},
+		{
+			DestinationId:      3,
+			UserId:             1,
+			ExpectedStatusCode: http.StatusNotFound,
+			ExpectedResponse: Response{
+				Destination: nil,
+				Errors: map[string][]string{
+					"destination": {"Destination not found"},
+				},
+			},
+		},
+		{
+			DestinationId:      1,
+			UserId:             1,
+			ExpectedStatusCode: http.StatusOK,
+			ExpectedResponse: Response{
+				Destination: &model.Destination{
+					Id:              1,
+					UserId:          1,
+					Type:            model.DestinationTypeDiscord,
+					Identifier:      "https://one.example.discord.webhook.invalid",
+					DatetimeCreated: time.Now(),
+					DatetimeUpdated: time.Now(),
+				},
+				Errors: map[string][]string{},
+			},
+		},
+	}
+
+	for tcn, tc := range tcs {
+		ctx := context.Background()
+		actualStatusCode, actualResponse := service.GetDestinationById(ctx, tc.DestinationId, tc.UserId)
+		if actualStatusCode != tc.ExpectedStatusCode {
+			t.Fatalf("test case number %d, expected response %d, got %d", tcn, tc.ExpectedStatusCode, actualStatusCode)
+		}
+
+		if !reflect.DeepEqual(actualResponse.Errors, tc.ExpectedResponse.Errors) {
+			t.Fatalf("test case number %d, expected response %+v, got %+v", tcn, tc.ExpectedResponse, actualResponse)
+		}
+
+		if actualResponse.Destination != nil && tc.ExpectedResponse.Destination != nil && (actualResponse.Destination.Id != tc.ExpectedResponse.Destination.Id ||
+			actualResponse.Destination.UserId != tc.ExpectedResponse.Destination.UserId || actualResponse.Destination.Type != tc.ExpectedResponse.Destination.Type ||
+			actualResponse.Destination.Identifier != tc.ExpectedResponse.Destination.Identifier) {
+			t.Fatalf("test case number %d, expected response %+v, got %+v", tcn, tc.ExpectedResponse.Destination, actualResponse.Destination)
+		}
+	}
+}
