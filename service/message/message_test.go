@@ -141,6 +141,11 @@ func TestCreateMessage(t *testing.T) {
 			if messages[0].NotifiMessageId != tc.ExpectedResponse.Message.Id {
 				t.Fatalf("test case number %d, expected notifi message id %d, got %d", tcn, tc.ExpectedResponse.Message.Id, messages[0].NotifiMessageId)
 			}
+
+			err = service.QueueProvider.DeleteMessageFromQueue(messages[0].QueueMessageId)
+			if err != nil {
+				t.Error(err)
+			}
 		}
 	}
 }

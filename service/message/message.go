@@ -14,6 +14,7 @@ import (
 type QueueProvider interface {
 	CreateMessage(queueMessageBody model.QueueMessageBody) error
 	GetMessagesFromQueue(waitTimeSeconds int) ([]model.QueueMessage, error)
+	DeleteMessageFromQueue(id string) error
 }
 
 type MessageProvider interface {
