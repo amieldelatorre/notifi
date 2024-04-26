@@ -8,7 +8,7 @@ import (
 type MessageStatus string
 
 const (
-	MessageStatusSet     MessageStatus = "SENT"
+	MessageStatusSent    MessageStatus = "SENT"
 	MessageStatusPending MessageStatus = "PENDING"
 	MessageStatusFailed  MessageStatus = "FAILED"
 )

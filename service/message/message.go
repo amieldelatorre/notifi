@@ -31,14 +31,14 @@ type Response struct {
 }
 
 type Service struct {
-	Provider            MessageProvider
+	MessageProvider     MessageProvider
 	Logger              *slog.Logger
 	DestinationProvider DestinationProvider
 	QueueProvider       QueueProvider
 }
 
-func New(logger *slog.Logger, provider MessageProvider, destinationProvider DestinationProvider, queueProver QueueProvider) Service {
-	return Service{Logger: logger, Provider: provider, DestinationProvider: destinationProvider, QueueProvider: queueProver}
+func New(logger *slog.Logger, messageProvider MessageProvider, destinationProvider DestinationProvider, queueProver QueueProvider) Service {
+	return Service{Logger: logger, MessageProvider: messageProvider, DestinationProvider: destinationProvider, QueueProvider: queueProver}
 }
 
 func (s *Service) CreateMessage(ctx context.Context, input model.MessageInput) (int, Response) {
@@ -67,7 +67,7 @@ func (s *Service) CreateMessage(ctx context.Context, input model.MessageInput) (
 		Body:          cleanInput.Body,
 	}
 
-	newMessage, err := s.Provider.CreateMessage(ctx, messageToCreate)
+	newMessage, err := s.MessageProvider.CreateMessage(ctx, messageToCreate)
 	if err != nil {
 		s.Logger.Error("Could not create message from provider", "requestId", requestId, "error", err)
 		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
