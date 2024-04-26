@@ -11,6 +11,11 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+type QueueProvider interface {
+	CreateMessage(queueMessageBody model.QueueMessageBody) error
+	GetMessagesFromQueue(waitTimeSeconds int) ([]model.QueueMessage, error)
+}
+
 type MessageProvider interface {
 	CreateMessage(ctx context.Context, input model.Message) (model.Message, error)
 }
@@ -28,10 +33,11 @@ type Service struct {
 	Provider            MessageProvider
 	Logger              *slog.Logger
 	DestinationProvider DestinationProvider
+	QueueProvider       QueueProvider
 }
 
-func New(logger *slog.Logger, provider MessageProvider, destinationProvider DestinationProvider) Service {
-	return Service{Logger: logger, Provider: provider, DestinationProvider: destinationProvider}
+func New(logger *slog.Logger, provider MessageProvider, destinationProvider DestinationProvider, queueProver QueueProvider) Service {
+	return Service{Logger: logger, Provider: provider, DestinationProvider: destinationProvider, QueueProvider: queueProver}
 }
 
 func (s *Service) CreateMessage(ctx context.Context, input model.MessageInput) (int, Response) {
@@ -64,6 +70,16 @@ func (s *Service) CreateMessage(ctx context.Context, input model.MessageInput) (
 	if err != nil {
 		s.Logger.Error("Could not create message from provider", "requestId", requestId, "error", err)
 		response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
+		return http.StatusInternalServerError, response
+	}
+
+	queueMessageBody := model.QueueMessageBody{
+		NotifiMessageId: newMessage.Id,
+	}
+	err = s.QueueProvider.CreateMessage(queueMessageBody)
+	if err != nil {
+		s.Logger.Error("Could not queue message", "requestId", requestId, "error", err)
+		response.Errors["server"] = append(response.Errors["server"], "Something went wrong", "We had trouble putting the message in the queue, there may be delays in delivery")
 		return http.StatusInternalServerError, response
 	}
 

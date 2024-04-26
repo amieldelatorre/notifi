@@ -10,14 +10,25 @@ import (
 
 	"github.com/amieldelatorre/notifi/logger"
 	"github.com/amieldelatorre/notifi/model"
+	"github.com/amieldelatorre/notifi/repository"
+	"github.com/amieldelatorre/notifi/testutils"
 	"github.com/amieldelatorre/notifi/utils"
 )
 
 func TestCreateMessage(t *testing.T) {
 	logger := logger.New(io.Discard, slog.LevelWarn)
 	testDbInstance := NewTestDbInstance()
+	testQueueInstance := testutils.NewTestQueueProviderInstance()
+
 	defer testDbInstance.CleanUp()
-	service := New(logger, testDbInstance.Provider, testDbInstance.DestinationProvider)
+	defer testQueueInstance.CleanUp()
+
+	queueProvider, err := repository.NewSQSMessageQueueProvider("http://localhost:9324", "ap-southeast2", "notifi")
+	if err != nil {
+		t.Fatalf("Startup failed. Could not connect to the queue error: %+v", err)
+	}
+
+	service := New(logger, testDbInstance.Provider, testDbInstance.DestinationProvider, &queueProvider)
 
 	tcs := []struct {
 		UserId             int
@@ -119,6 +130,17 @@ func TestCreateMessage(t *testing.T) {
 			actualResponse.Message.UserId != tc.ExpectedResponse.Message.UserId || actualResponse.Message.Title != tc.ExpectedResponse.Message.Title ||
 			actualResponse.Message.Body != tc.ExpectedResponse.Message.Body || actualResponse.Message.Status != tc.ExpectedResponse.Message.Status) {
 			t.Fatalf("test case number %d, expected response %+v, got %+v", tcn, tc.ExpectedResponse.Message, actualResponse.Message)
+		}
+
+		if tc.ExpectedStatusCode == http.StatusCreated {
+			messages, err := service.QueueProvider.GetMessagesFromQueue(1)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if messages[0].NotifiMessageId != tc.ExpectedResponse.Message.Id {
+				t.Fatalf("test case number %d, expected notifi message id %d, got %d", tcn, tc.ExpectedResponse.Message.Id, messages[0].NotifiMessageId)
+			}
 		}
 	}
 }

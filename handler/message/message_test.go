@@ -13,24 +13,34 @@ import (
 
 	"github.com/amieldelatorre/notifi/logger"
 	"github.com/amieldelatorre/notifi/model"
+	"github.com/amieldelatorre/notifi/repository"
 	messageService "github.com/amieldelatorre/notifi/service/message"
 	"github.com/amieldelatorre/notifi/service/security"
+	"github.com/amieldelatorre/notifi/testutils"
 	"github.com/amieldelatorre/notifi/utils"
 )
 
-func GetNewMockMessageHandler() (MessageHandler, messageService.TestDbProviderInstance) {
+func GetNewMockMessageHandler() (MessageHandler, messageService.TestDbProviderInstance, testutils.TestQueueProviderInstance) {
 	logger := logger.New(io.Discard, slog.LevelWarn)
 	testDbInstance := messageService.NewTestDbInstance()
-	msgService := messageService.New(logger, testDbInstance.Provider, testDbInstance.DestinationProvider)
+
+	testQueueInstance := testutils.NewTestQueueProviderInstance()
+	queueProvider, err := repository.NewSQSMessageQueueProvider("http://localhost:9324", "ap-southeast2", "notifi")
+	if err != nil {
+		panic(err)
+	}
+
+	msgService := messageService.New(logger, testDbInstance.Provider, testDbInstance.DestinationProvider, &queueProvider)
 	jwtService := security.NewJwtService([]byte("super_secret_signing_key"))
 
 	mockMessageHandler := New(logger, msgService, jwtService)
-	return mockMessageHandler, testDbInstance
+	return mockMessageHandler, testDbInstance, testQueueInstance
 }
 
 func TestPostMessage(t *testing.T) {
-	mockMessageHandler, testDbInstance := GetNewMockMessageHandler()
+	mockMessageHandler, testDbInstance, testQueueInstance := GetNewMockMessageHandler()
 	defer testDbInstance.CleanUp()
+	defer testQueueInstance.CleanUp()
 
 	tcs := []struct {
 		UserId             int
@@ -158,6 +168,17 @@ func TestPostMessage(t *testing.T) {
 			msgResponse.Message.UserId != tc.ExpectedResponse.Message.UserId || msgResponse.Message.Title != tc.ExpectedResponse.Message.Title ||
 			msgResponse.Message.Body != tc.ExpectedResponse.Message.Body || msgResponse.Message.Status != tc.ExpectedResponse.Message.Status) {
 			t.Fatalf("test case number %d, expected response user %+v, got %+v", tcn, tc.ExpectedResponse.Message, msgResponse.Message)
+		}
+
+		if tc.ExpectedStatusCode == http.StatusCreated {
+			messages, err := mockMessageHandler.Service.QueueProvider.GetMessagesFromQueue(1)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if messages[0].NotifiMessageId != tc.ExpectedResponse.Message.Id {
+				t.Fatalf("test case number %d, expected notifi message id %d, got %d", tcn, tc.ExpectedResponse.Message.Id, messages[0].NotifiMessageId)
+			}
 		}
 	}
 }

@@ -57,9 +57,13 @@ func NewApp() Application {
 	usrProvider := repository.NewUserPostgresProvider(dbPool)
 	msgProvider := repository.NewMessagePostgresProvider(dbPool)
 	destProvider := repository.NewDestinationPostgresProvider(dbPool)
+	queueProvider, err := repository.NewSQSMessageQueueProvider("http://localhost:9324", "ap-southeast2", "notifi")
+	if err != nil {
+		logger.Error("Startup failed. Could not connect to the queue", "error", err)
+	}
 
 	jwtService := security.NewJwtService(signingKey)
-	msgService := messageService.New(logger, msgProvider, destProvider)
+	msgService := messageService.New(logger, msgProvider, destProvider, &queueProvider)
 	destService := destinationService.New(logger, destProvider)
 
 	usrHandler := userHandler.New(logger, userService.New(logger, usrProvider), jwtService)
