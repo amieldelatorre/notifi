@@ -36,7 +36,7 @@ func NewTestQueueProviderInstance() TestQueueProviderInstance {
 				FileMode:          0o660,
 			},
 		},
-		WaitingFor: wait.ForLog("[main] INFO  org.elasticmq.server.Main$ - === ElasticMQ server"),
+		WaitingFor: wait.ForLog(`org\.elasticmq\.server\.Main\$ - === ElasticMQ server \(\d+\.\d+\.\d+\) started`).AsRegexp(),
 	}
 
 	elasticmqContainer, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
