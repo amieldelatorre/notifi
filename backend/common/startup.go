@@ -1,0 +1,42 @@
+package common // import "github.com/amieldelatorre/notifi/backend/common"
+
+import (
+	"context"
+	"log/slog"
+
+	"github.com/amieldelatorre/notifi/backend/utils"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+type Startup struct {
+	Logger *slog.Logger
+}
+
+func (st *Startup) InitDb(requiredEnvVars *utils.RequiredEnvVariables) *pgxpool.Pool {
+	st.Logger.Info("Initialising database connection")
+
+	ut := utils.Util{Logger: st.Logger}
+	postgres_connection_string := ut.GetPostgresConnectionString(
+		requiredEnvVars.PortgresHost,
+		requiredEnvVars.PortgresPort,
+		requiredEnvVars.PortgresUsername,
+		requiredEnvVars.PortgresPassword,
+		requiredEnvVars.PortgresDabasename,
+	)
+
+	ut.Logger.Debug("Creating database pool with connection string")
+	dbPool, err := pgxpool.New(context.Background(), postgres_connection_string)
+	if err != nil {
+		ut.Logger.Error("Could not create database pool")
+		ut.ExitWithError(1, err)
+	}
+
+	ut.Logger.Debug("Checking connectivity with database")
+	err = dbPool.Ping(context.Background())
+	if err != nil {
+		ut.Logger.Error("Could not connect to database")
+		ut.ExitWithError(1, err)
+	}
+
+	return dbPool
+}
