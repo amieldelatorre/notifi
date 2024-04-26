@@ -13,6 +13,7 @@ import (
 type TestQueueProviderInstance struct {
 	Container testcontainers.Container
 	Context   context.Context
+	Endpoint  string
 }
 
 func NewTestQueueProviderInstance() TestQueueProviderInstance {
@@ -46,8 +47,12 @@ func NewTestQueueProviderInstance() TestQueueProviderInstance {
 		log.Fatalf("Could not start elasticmqContainer: %s", err)
 	}
 
-	return TestQueueProviderInstance{Container: elasticmqContainer, Context: ctx}
+	endpoint, err := elasticmqContainer.Endpoint(ctx, "http")
+	if err != nil {
+		log.Fatalf("Could not get elasticmqContainer endpoint: %s", err)
+	}
 
+	return TestQueueProviderInstance{Container: elasticmqContainer, Context: ctx, Endpoint: endpoint}
 }
 
 func (q *TestQueueProviderInstance) CleanUp() {

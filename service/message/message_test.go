@@ -23,7 +23,7 @@ func TestCreateMessage(t *testing.T) {
 	defer testDbInstance.CleanUp()
 	defer testQueueInstance.CleanUp()
 
-	queueProvider, err := repository.NewSQSMessageQueueProvider("http://localhost:9324", "ap-southeast2", "notifi")
+	queueProvider, err := repository.NewSQSMessageQueueProvider(testQueueInstance.Endpoint, "ap-southeast2", "notifi")
 	if err != nil {
 		t.Fatalf("Startup failed. Could not connect to the queue error: %+v", err)
 	}

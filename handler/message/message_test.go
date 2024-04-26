@@ -25,7 +25,7 @@ func GetNewMockMessageHandler() (MessageHandler, messageService.TestDbProviderIn
 	testDbInstance := messageService.NewTestDbInstance()
 
 	testQueueInstance := testutils.NewTestQueueProviderInstance()
-	queueProvider, err := repository.NewSQSMessageQueueProvider("http://localhost:9324", "ap-southeast2", "notifi")
+	queueProvider, err := repository.NewSQSMessageQueueProvider(testQueueInstance.Endpoint, "ap-southeast2", "notifi")
 	if err != nil {
 		panic(err)
 	}
