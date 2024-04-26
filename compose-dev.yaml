@@ -2,7 +2,7 @@ services:
   postgres:
     image: postgres
     container_name: postgres
-    restart: unless-stopped
+    restart: on-failure:5
     # networks:
     #   - network-db
     ports:
@@ -17,7 +17,7 @@ services:
   sqs:
       image: softwaremill/elasticmq
       container_name: sqs
-      restart: unless-stopped
+      restart: on-failure:5
       ports:
         - 9324:9324
         - 9325:9325
