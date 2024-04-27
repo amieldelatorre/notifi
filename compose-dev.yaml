@@ -12,6 +12,12 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-root}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
       TZ: Pacific/Auckland
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   sqs:
       image: softwaremill/elasticmq
       container_name: sqs
@@ -22,6 +28,11 @@ services:
       volumes:
         - ./sqs/custom.conf:/opt/elasticmq.conf
         - ./sqs/data:/data
+      healthcheck:
+        test: wget -q -S -O - 127.0.0.1:9324/?Action=ListQueues || exit 1
+        interval: 10s
+        timeout: 5s
+        retries: 5
   
   api:
     container_name: api
@@ -44,6 +55,13 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-x}
       AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-x}
       TZ: Pacific/Auckland
+    depends_on:
+      postgres:
+          condition: service_healthy
+          restart: true
+      sqs:
+          condition: service_healthy
+          restart: true
     develop:
       watch:
         - path: ./backend
@@ -68,6 +86,13 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-x}
       AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-x}
       TZ: Pacific/Auckland
+    depends_on:
+      postgres:
+          condition: service_healthy
+          restart: true
+      sqs:
+          condition: service_healthy
+          restart: true
     develop:
       watch:
         - path: ./backend
