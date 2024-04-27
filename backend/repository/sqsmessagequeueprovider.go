@@ -3,8 +3,10 @@ package repository
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/amieldelatorre/notifi/backend/model"
+	"github.com/amieldelatorre/notifi/backend/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -16,11 +18,26 @@ type SQSMessageQueueProvider struct {
 	QueueUrl string
 }
 
-func NewSQSMessageQueueProvider(endpoint string, region string, queueName string) (SQSMessageQueueProvider, error) {
-	creds := credentials.AnonymousCredentials
-	sessionConfig := &aws.Config{
-		Credentials: creds,
+func NewSQSMessageQueueProvider(logger *slog.Logger, endpoint string, region string, queueName string) (SQSMessageQueueProvider, error) {
+	logger.Info("Attempting to connect to SQS")
+	ut := utils.Util{Logger: logger}
+	optionalEnvVariables := ut.GetOptionalEnvironmentVariables()
+	var sessionConfig *aws.Config
+
+	if optionalEnvVariables.AwsAccessKeyId != "" || optionalEnvVariables.AwsSecretAccessKey != "" || optionalEnvVariables.AwsSessionToken != "" {
+		logger.Info("One of the AWS environment variables is not empty, using those credentials")
+		creds := credentials.NewStaticCredentials(optionalEnvVariables.AwsAccessKeyId, optionalEnvVariables.AwsSecretAccessKey, optionalEnvVariables.AwsSessionToken)
+
+		sessionConfig = &aws.Config{
+			Region:      &region,
+			Credentials: creds,
+		}
+	} else {
+		sessionConfig = &aws.Config{
+			Region: &region,
+		}
 	}
+
 	awsSession, err := session.NewSession(sessionConfig)
 	if err != nil {
 		return SQSMessageQueueProvider{}, err

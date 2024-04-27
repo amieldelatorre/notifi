@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/amieldelatorre/notifi/backend/utils"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
 )
@@ -18,6 +19,9 @@ type TestQueueProviderInstance struct {
 
 func NewTestQueueProviderInstance() TestQueueProviderInstance {
 	ctx := context.Background()
+	os.Setenv(utils.AwsAccessKeyId, "x")
+	os.Setenv(utils.AwsSecretAccessKey, "x")
+	os.Setenv(utils.AwsSessionToken, "x")
 
 	sqsCustomConfPath := filepath.Join("../../../sqs", "custom.conf")
 	r, err := os.Open(sqsCustomConfPath)

@@ -86,6 +86,9 @@ func TestGetRequiredEnvVariablesFail(t *testing.T) {
 		PortgresUsernameEnvVariableName,
 		PortgresPasswordEnvVariableName,
 		PortgresDatabaseNameEnvVariableName,
+		SqsQueueUrl,
+		SqsQueueRegion,
+		SqsQueueName,
 	}
 
 	for _, envVar := range envVars {
@@ -115,6 +118,9 @@ func TestGetRequiredEnvVariablesSuccess(t *testing.T) {
 		PortgresUsernameEnvVariableName,
 		PortgresPasswordEnvVariableName,
 		PortgresDatabaseNameEnvVariableName,
+		SqsQueueUrl,
+		SqsQueueRegion,
+		SqsQueueName,
 	}
 
 	for _, envVar := range envVars {
@@ -127,6 +133,9 @@ func TestGetRequiredEnvVariablesSuccess(t *testing.T) {
 		PortgresUsername:   varValue,
 		PortgresPassword:   varValue,
 		PortgresDabasename: varValue,
+		SqsQueueUrl:        varValue,
+		SqsQueueRegion:     varValue,
+		SqsQueueName:       varValue,
 	}
 	ut := GetUtil()
 
@@ -162,5 +171,77 @@ func TestExitWithError(t *testing.T) {
 
 	if resultingError.Success() {
 		t.Fatalf("expected exit code %d, got %d", exitStatus, resultingError.ExitCode())
+	}
+}
+
+func TestGetOptionalEnvironmentVariable(t *testing.T) {
+	ut := GetUtil()
+	os.Unsetenv(AwsAccessKeyId)
+
+	defer func() {
+		os.Unsetenv(AwsAccessKeyId)
+		os.Unsetenv(AwsSecretAccessKey)
+		os.Unsetenv(AwsSessionToken)
+	}()
+
+	expectedVal1 := ""
+	test1Val := ut.GetOptionalEnvironmentVariable(AwsAccessKeyId)
+	if test1Val != expectedVal1 {
+		t.Fatalf("expected '%s', got %s", expectedVal1, test1Val)
+	}
+
+	expectedVal2 := "value"
+	os.Setenv(AwsSecretAccessKey, "value    ")
+	test2Val := ut.GetOptionalEnvironmentVariable(AwsSecretAccessKey)
+	if test2Val != expectedVal2 {
+		t.Fatalf("expected '%s', got %s", expectedVal2, test2Val)
+	}
+
+	expectedVa3 := "value"
+	os.Setenv(AwsSessionToken, expectedVa3)
+	test3Val := ut.GetOptionalEnvironmentVariable(AwsSessionToken)
+	if test2Val != expectedVa3 {
+		t.Fatalf("expected '%s', got %s", expectedVa3, test3Val)
+	}
+
+}
+
+func TestGetOptionalEnvironmentVariables(t *testing.T) {
+	ut := GetUtil()
+
+	tcs := []struct {
+		EnvVarsToSet                 map[string]string
+		ExpectedOptionalEnvVariables OptionalEnvVariables
+	}{
+		{
+			ExpectedOptionalEnvVariables: OptionalEnvVariables{},
+		},
+		{
+			EnvVarsToSet: map[string]string{
+				AwsAccessKeyId:     "id",
+				AwsSecretAccessKey: "key",
+				AwsSessionToken:    "token   ",
+			},
+			ExpectedOptionalEnvVariables: OptionalEnvVariables{
+				AwsAccessKeyId:     "id",
+				AwsSecretAccessKey: "key",
+				AwsSessionToken:    "token",
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		for k, v := range tc.EnvVarsToSet {
+			os.Setenv(k, v)
+		}
+
+		actual := ut.GetOptionalEnvironmentVariables()
+		if actual != tc.ExpectedOptionalEnvVariables {
+			t.Fatalf("expected '%+v', got %+v", tc.ExpectedOptionalEnvVariables, actual)
+		}
+
+		for k := range tc.EnvVarsToSet {
+			os.Unsetenv(k)
+		}
 	}
 }

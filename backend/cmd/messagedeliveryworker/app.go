@@ -34,7 +34,7 @@ func NewApp() Application {
 
 	msgProvider := repository.NewMessagePostgresProvider(dbPool)
 	destProvider := repository.NewDestinationPostgresProvider(dbPool)
-	queueProvider, err := repository.NewSQSMessageQueueProvider("http://localhost:9324", "ap-southeast2", "notifi")
+	queueProvider, err := repository.NewSQSMessageQueueProvider(logger, requiredEnvVars.SqsQueueUrl, requiredEnvVars.SqsQueueRegion, requiredEnvVars.SqsQueueName)
 	if err != nil {
 		logger.Error("Startup failed. Could not connect to the queue", "error", err)
 	}
@@ -52,7 +52,7 @@ func NewApp() Application {
 func (app *Application) Run() {
 	for {
 		if err := app.MessageDeliveryService.ProcessMessages(20); err != nil {
-			time.Sleep(5)
+			time.Sleep(5 * time.Second)
 		}
 	}
 }

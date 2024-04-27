@@ -34,7 +34,12 @@ jobs:
         run: |
           cd backend
           go build -o api ./cmd/api/
-
+      
+      - name: Build Message Delivery Worker Binary
+        run: |
+          cd backend
+          go build -o messagedeliveryworker ./cmd/messagedeliveryworker
+          
       - name: Run Tests
         run: |
           cd backend
