@@ -25,7 +25,7 @@ func NewSQSMessageQueueProvider(logger *slog.Logger, endpoint string, region str
 	var sessionConfig *aws.Config
 
 	if optionalEnvVariables.AwsAccessKeyId != "" || optionalEnvVariables.AwsSecretAccessKey != "" || optionalEnvVariables.AwsSessionToken != "" {
-		logger.Info("One of the AWS environment variables is not empty, using those credentials")
+		logger.Info("One of the AWS environment variables is not empty, using given credentials even if the others are empty")
 		creds := credentials.NewStaticCredentials(optionalEnvVariables.AwsAccessKeyId, optionalEnvVariables.AwsSecretAccessKey, optionalEnvVariables.AwsSessionToken)
 
 		sessionConfig = &aws.Config{
@@ -33,6 +33,7 @@ func NewSQSMessageQueueProvider(logger *slog.Logger, endpoint string, region str
 			Credentials: creds,
 		}
 	} else {
+		logger.Info("No AWS environment variables found, using default provider chain to look for credentials")
 		sessionConfig = &aws.Config{
 			Region: &region,
 		}

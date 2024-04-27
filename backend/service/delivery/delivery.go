@@ -11,6 +11,10 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+type DiscordDeliveryProvider interface {
+	DeliverToDiscordWebhook(discordWebhookUrl string, title string, body string) error
+}
+
 type QueueProvider interface {
 	CreateMessage(queueMessageBody model.QueueMessageBody) error
 	GetMessagesFromQueue(waitTimeSeconds int) ([]model.QueueMessage, error)
@@ -28,14 +32,15 @@ type DestinationProvider interface {
 }
 
 type Service struct {
-	MessageProvider     MessageProvider
-	Logger              *slog.Logger
-	DestinationProvider DestinationProvider
-	QueueProvider       QueueProvider
+	MessageProvider         MessageProvider
+	Logger                  *slog.Logger
+	DestinationProvider     DestinationProvider
+	QueueProvider           QueueProvider
+	DiscordDeliveryProvider DiscordDeliveryProvider
 }
 
-func New(logger *slog.Logger, messageProvider MessageProvider, destinationProvider DestinationProvider, queueProver QueueProvider) Service {
-	return Service{Logger: logger, MessageProvider: messageProvider, DestinationProvider: destinationProvider, QueueProvider: queueProver}
+func New(logger *slog.Logger, messageProvider MessageProvider, destinationProvider DestinationProvider, queueProver QueueProvider, discordDeliveryProvider DiscordDeliveryProvider) Service {
+	return Service{Logger: logger, MessageProvider: messageProvider, DestinationProvider: destinationProvider, QueueProvider: queueProver, DiscordDeliveryProvider: discordDeliveryProvider}
 }
 
 func (s *Service) ProcessMessages(waitTimeSeconds int) error {
@@ -54,7 +59,12 @@ func (s *Service) ProcessMessages(waitTimeSeconds int) error {
 		}
 
 		if messageToDeliver.Status != model.MessageStatusPending {
-			s.Logger.Warn("Message was already processed", "messageId", messageToDeliver.Id)
+			s.Logger.Warn("Message was already processed, deleting message from queue", "messageId", messageToDeliver.Id)
+			err = s.QueueProvider.DeleteMessageFromQueue(item.QueueMessageId)
+			if err != nil {
+				s.Logger.Error("Error removing item from queue", "error", err)
+				return err
+			}
 			continue
 		}
 
@@ -98,7 +108,7 @@ func (s *Service) DeliverMessage(ctx context.Context, destination model.Destinat
 	switch destination.Type {
 	case model.DestinationTypeDiscord:
 
-		err := s.DeliverToDiscordWebhook(destination.Identifier, messageToDeliver.Title, messageToDeliver.Body)
+		err := s.DiscordDeliveryProvider.DeliverToDiscordWebhook(destination.Identifier, messageToDeliver.Title, messageToDeliver.Body)
 		if err == nil {
 			updatedMessage.DatetimeSendAttempt = time.Now().UTC()
 			updatedMessage.Status = model.MessageStatusSent

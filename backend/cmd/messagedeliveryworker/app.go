@@ -32,6 +32,7 @@ func NewApp() Application {
 	st := common.Startup{Logger: logger}
 	dbPool := st.InitDb(&requiredEnvVars)
 
+	discordProvider := repository.NewDiscordProvider(logger)
 	msgProvider := repository.NewMessagePostgresProvider(dbPool)
 	destProvider := repository.NewDestinationPostgresProvider(dbPool)
 	queueProvider, err := repository.NewSQSMessageQueueProvider(logger, requiredEnvVars.SqsQueueUrl, requiredEnvVars.SqsQueueRegion, requiredEnvVars.SqsQueueName)
@@ -39,7 +40,7 @@ func NewApp() Application {
 		logger.Error("Startup failed. Could not connect to the queue", "error", err)
 	}
 
-	msgDeliveryService := messageDeliveryService.New(logger, msgProvider, destProvider, &queueProvider)
+	msgDeliveryService := messageDeliveryService.New(logger, msgProvider, destProvider, &queueProvider, &discordProvider)
 
 	app := Application{
 		DbPool:                 dbPool,
