@@ -3,8 +3,6 @@ services:
     image: postgres
     container_name: postgres
     restart: on-failure:5
-    # networks:
-    #   - network-db
     ports:
       - 5432:5432
     volumes:
@@ -25,8 +23,52 @@ services:
         - ./sqs/custom.conf:/opt/elasticmq.conf
         - ./sqs/data:/data
   
-
-# networks:
-#   network-db:
-#     external: false    
-    
+  api:
+    container_name: api
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.api
+    ports:
+      - 8080:8080
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-notifi}
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      SQS_QUEUE_URL: ${SQS_QUEUE_URL:-http://sqs:9324}
+      SQS_QUEUE_REGION: ${SQS_QUEUE_REGION:-ap-southeast-2}
+      SQS_QUEUE_NAME: ${SQS_QUEUE_NAME:-notifi}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-x}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-x}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-x}
+      TZ: Pacific/Auckland
+    develop:
+      watch:
+        - path: ./backend
+          action: rebuild 
+  
+  message-delivery-worker:
+    container_name: message-delivery-worker
+    pull_policy: build
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.messagedeliveryworker
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-notifi}
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      SQS_QUEUE_URL: ${SQS_QUEUE_URL:-http://sqs:9324}
+      SQS_QUEUE_REGION: ${SQS_QUEUE_REGION:-ap-southeast-2}
+      SQS_QUEUE_NAME: ${SQS_QUEUE_NAME:-notifi}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-x}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-x}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-x}
+      TZ: Pacific/Auckland
+    develop:
+      watch:
+        - path: ./backend
+          action: rebuild 
