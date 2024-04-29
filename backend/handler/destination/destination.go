@@ -38,7 +38,6 @@ func (h *DestinationHandler) RegisterRoutes(mux *http.ServeMux) {
 func (h *DestinationHandler) postDestination(w http.ResponseWriter, r *http.Request) {
 	requestId := r.Context().Value(utils.RequestIdName)
 	h.Logger.Debug("Creating destination", "requestId", requestId)
-	w.Header().Set("Content-Type", "application/json")
 
 	var destinationInput model.DestinationInput
 	var response destinationService.Response
@@ -49,22 +48,19 @@ func (h *DestinationHandler) postDestination(w http.ResponseWriter, r *http.Requ
 			h.Logger.Error("Post Destination, could not unmarshal json from request body", "requestId", requestId, "error", err, "responseStatusCode", http.StatusInternalServerError)
 			response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
 
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(response)
+			utils.EncodeResponse[destinationService.Response](w, http.StatusInternalServerError, response)
 			return
 		} else {
 			h.Logger.Info("Post Destination", "requestId", requestId, "responseStatusCode", http.StatusBadRequest)
 			response.Errors["destinationInput"] = append(response.Errors["destinationInput"], "Invalid json")
 
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(response)
+			utils.EncodeResponse[destinationService.Response](w, http.StatusBadRequest, response)
 			return
 		}
 	}
 
 	statusCode, response := h.Service.CreateDestination(r.Context(), destinationInput)
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(response)
+	utils.EncodeResponse[destinationService.Response](w, statusCode, response)
 	h.Logger.Info("Post Destination", "requestId", requestId, "responseStatusCode", statusCode)
 }
 
@@ -72,13 +68,11 @@ func (h *DestinationHandler) getDestinations(w http.ResponseWriter, r *http.Requ
 	ctx := r.Context()
 	requestId := ctx.Value(utils.RequestIdName)
 	h.Logger.Debug("Retrieving destinations", "requestId", requestId)
-	w.Header().Set("Content-Type", "application/json")
 
 	userId := ctx.Value(utils.UserId).(int)
 
 	statusCode, response := h.Service.GetAllDestinations(ctx, userId)
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(response)
+	utils.EncodeResponse[destinationService.Response](w, statusCode, response)
 	h.Logger.Info("Get Destinations", "requestId", requestId, "responseStatusCode", statusCode)
 }
 
@@ -86,7 +80,6 @@ func (h *DestinationHandler) getDestinationById(w http.ResponseWriter, r *http.R
 	ctx := r.Context()
 	requestId := ctx.Value(utils.RequestIdName)
 	h.Logger.Debug("Retrieving destinations", "requestId", requestId)
-	w.Header().Set("Content-Type", "application/json")
 
 	userId := ctx.Value(utils.UserId).(int)
 	destinationIdString := r.PathValue("id")
@@ -99,13 +92,11 @@ func (h *DestinationHandler) getDestinationById(w http.ResponseWriter, r *http.R
 		h.Logger.Debug("Get Destination By Id", "requestId", requestId, "responseStatusCode", http.StatusBadRequest)
 		response.Errors["id"] = append(response.Errors["id"], "Invalid destination Id provided. Must be an integer")
 
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(response)
+		utils.EncodeResponse[destinationService.Response](w, http.StatusBadRequest, response)
 		return
 	}
 
 	statusCode, response := h.Service.GetDestinationById(ctx, destinationIdInt, userId)
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(response)
+	utils.EncodeResponse[destinationService.Response](w, statusCode, response)
 	h.Logger.Info("Get Destination By Id", "requestId", requestId, "responseStatusCode", statusCode)
 }

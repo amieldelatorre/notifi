@@ -33,7 +33,6 @@ func (h *MessageHandler) RegisterRoutes(mux *http.ServeMux) {
 func (h *MessageHandler) postMessage(w http.ResponseWriter, r *http.Request) {
 	requestId := r.Context().Value(utils.RequestIdName)
 	h.Logger.Debug("Creating message", "requestId", requestId)
-	w.Header().Set("Content-Type", "application/json")
 
 	var messageInput model.MessageInput
 	response := messageService.Response{
@@ -46,21 +45,19 @@ func (h *MessageHandler) postMessage(w http.ResponseWriter, r *http.Request) {
 			h.Logger.Error("Post Message, could not unmarshal json from request body", "requestId", requestId, "error", err, "responseStatusCode", http.StatusInternalServerError)
 			response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
 
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(response)
+			response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
+			utils.EncodeResponse[messageService.Response](w, http.StatusInternalServerError, response)
 			return
 		} else {
 			h.Logger.Info("Post Message", "requestId", requestId, "responseStatusCode", http.StatusBadRequest)
 			response.Errors["messageInput"] = append(response.Errors["messageInput"], "Invalid json")
 
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(response)
+			utils.EncodeResponse[messageService.Response](w, http.StatusBadRequest, response)
 			return
 		}
 	}
 
 	statusCode, response := h.Service.CreateMessage(r.Context(), messageInput)
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(response)
+	utils.EncodeResponse[messageService.Response](w, statusCode, response)
 	h.Logger.Info("Post Message", "requestId", requestId, "responseStatusCode", statusCode)
 }

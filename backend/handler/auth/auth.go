@@ -35,21 +35,28 @@ func (h *AuthHandler) login(w http.ResponseWriter, r *http.Request) {
 	h.Logger.Debug("Login user", "requestId", requestId)
 
 	var basicAuthCredentials authService.BasicAuthCredentials
+	response := authService.AuthResponse{
+		Errors: map[string][]string{},
+	}
 
 	err := json.NewDecoder(r.Body).Decode(&basicAuthCredentials)
 	if err != nil {
 		if _, ok := err.(*json.InvalidUnmarshalError); ok {
 			h.Logger.Error("Login User, could not unmarshal json from request body", "requestId", requestId, "error", err, "responseStatusCode", http.StatusInternalServerError)
-			w.WriteHeader(http.StatusInternalServerError)
+
+			response.Errors["server"] = append(response.Errors["server"], "Server had issues decoding JSON body")
+			utils.EncodeResponse[authService.AuthResponse](w, http.StatusInternalServerError, response)
+			return
 		} else {
-			w.WriteHeader(http.StatusInternalServerError)
-			h.Logger.Info("Login User", "requestId", requestId, "responseStatusCode", http.StatusBadRequest)
+			h.Logger.Debug("Login User", "requestId", requestId, "responseStatusCode", http.StatusBadRequest)
+
+			response.Errors["input"] = append(response.Errors["input"], "Invalid JSON body")
+			utils.EncodeResponse[authService.AuthResponse](w, http.StatusBadRequest, response)
 			return
 		}
 	}
 
 	statusCode, response := h.AuthService.LoginUser(r.Context(), basicAuthCredentials)
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(response)
+	utils.EncodeResponse[authService.AuthResponse](w, statusCode, response)
 	h.Logger.Info("Login User", "requestId", requestId, "responseStatusCode", statusCode)
 }

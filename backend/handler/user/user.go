@@ -37,7 +37,6 @@ func (h *UserHandler) RegisterRoutes(mux *http.ServeMux) {
 func (h *UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
 	requestId := r.Context().Value(utils.RequestIdName)
 	h.Logger.Debug("Creating user", "requestId", requestId)
-	w.Header().Set("Content-Type", "application/json")
 
 	var userInput model.UserInput
 	var response userService.UserResponse
@@ -46,49 +45,42 @@ func (h *UserHandler) postUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if _, ok := err.(*json.InvalidUnmarshalError); ok {
 			h.Logger.Error("Post User, could not unmarshal json from request body", "requestId", requestId, "error", err, "responseStatusCode", http.StatusInternalServerError)
-			response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
 
-			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(response)
+			response.Errors["server"] = append(response.Errors["server"], "Something went wrong")
+			utils.EncodeResponse[userService.UserResponse](w, http.StatusInternalServerError, response)
 			return
 		} else {
 			h.Logger.Info("Post User", "requestId", requestId, "responseStatusCode", http.StatusBadRequest)
 
 			response.Errors["userInput"] = append(response.Errors["userInput"], "Invalid json")
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(response)
+			utils.EncodeResponse[userService.UserResponse](w, http.StatusBadRequest, response)
 			return
 		}
 	}
 
 	statusCode, response := h.Service.CreateUser(r.Context(), userInput)
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(response)
+	utils.EncodeResponse[userService.UserResponse](w, statusCode, response)
 	h.Logger.Info("Post User", "requestId", requestId, "responseStatusCode", statusCode)
 }
 
 func (h *UserHandler) getUser(w http.ResponseWriter, r *http.Request) {
 	requestId := r.Context().Value(utils.RequestIdName)
 	h.Logger.Debug("Retrieving user", "requestId", requestId)
-	w.Header().Set("Content-Type", "application/json")
 
 	// TODO: Use context to get user id instead!
 	userId := r.Context().Value(utils.UserId)
 
 	statusCode, response := h.Service.GetUserById(r.Context(), userId.(int))
-	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(response)
+	utils.EncodeResponse[userService.UserResponse](w, statusCode, response)
 	h.Logger.Info("Get User", "requestId", requestId, "responseStatusCode", statusCode)
 }
 
 func (h *UserHandler) putUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 func (h *UserHandler) deleteUser(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 
 	w.WriteHeader(http.StatusNotImplemented)
 }

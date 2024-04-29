@@ -2,7 +2,6 @@ package middleware // import "github.com/amieldelatorre/notifi/backend/middlewar
 
 import (
 	"context"
-	"encoding/json"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -31,6 +30,7 @@ func (m *Middleware) RecoverPanic(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				m.Logger.Error("Had to recover from panic", "error", err)
 				w.WriteHeader(http.StatusInternalServerError)
+				return
 			}
 		}()
 
@@ -69,8 +69,7 @@ func (m *Middleware) RequireJwtToken(next http.Handler) http.Handler {
 			response.Errors["Authorization"] = append(response.Errors["Authorization"], "Missing Authorization header")
 			m.Logger.Debug("Missing Authorization header for JWT", "requestId", requestId)
 
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(response)
+			utils.EncodeResponse[MiddlewareErrors](w, http.StatusUnauthorized, response)
 			return
 		}
 
@@ -79,8 +78,7 @@ func (m *Middleware) RequireJwtToken(next http.Handler) http.Handler {
 			response.Errors["Authorization"] = append(response.Errors["Authorization"], "Wrong Authorization header type, this endpoint requires an Authorization of 'Bearer' and a token")
 			m.Logger.Debug("Authorization header value does not contain the right amount of values (2)", "requestId", requestId)
 
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(response)
+			utils.EncodeResponse[MiddlewareErrors](w, http.StatusUnauthorized, response)
 			return
 		}
 
@@ -91,8 +89,7 @@ func (m *Middleware) RequireJwtToken(next http.Handler) http.Handler {
 			response.Errors["Authorization"] = append(response.Errors["Authorization"], "Wrong Authorization header type, this endpoint requires an Authorization of 'Bearer'")
 			m.Logger.Debug("Header type not 'Bearer' for JWT", "requestId", requestId)
 
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(response)
+			utils.EncodeResponse[MiddlewareErrors](w, http.StatusUnauthorized, response)
 			return
 		}
 
@@ -101,8 +98,7 @@ func (m *Middleware) RequireJwtToken(next http.Handler) http.Handler {
 			response.Errors["Authorization"] = append(response.Errors["Authorization"], "Invalid 'Bearer' token")
 			m.Logger.Debug("Invalid JWT token", "requestId", requestId)
 
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(response)
+			utils.EncodeResponse[MiddlewareErrors](w, http.StatusUnauthorized, response)
 			return
 		}
 
@@ -124,8 +120,8 @@ func (m *Middleware) RequireApplicationJson(next http.Handler) http.Handler {
 			response.Errors["Content-Type"] = append(response.Errors["Content-Type"], "Content-Type unsupported, must be 'application/json'")
 			m.Logger.Debug("Content-Type header is not 'application/json'", "requestId", requestId)
 
-			w.WriteHeader(http.StatusUnsupportedMediaType)
-			json.NewEncoder(w).Encode(response)
+			utils.EncodeResponse[MiddlewareErrors](w, http.StatusUnsupportedMediaType, response)
+			return
 		}
 
 		next.ServeHTTP(w, r)
