@@ -4,31 +4,31 @@ services:
     container_name: postgres
     restart: on-failure:5
     ports:
-      - 5432:5432
+        - 5432:5432
     volumes:
-      - ./postgresql/data:/var/lib/postgresql/data
+        - ./postgresql/data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-notifi}
-      POSTGRES_USER: ${POSTGRES_USER:-root}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-      TZ: Pacific/Auckland
+        POSTGRES_DB: ${POSTGRES_DB:-notifi}
+        POSTGRES_USER: ${POSTGRES_USER:-root}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+        TZ: Pacific/Auckland
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+        test: ["CMD-SHELL", "pg_isready"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
 
   sqs:
-      image: softwaremill/elasticmq
-      container_name: sqs
-      restart: on-failure:5
-      ports:
+    image: softwaremill/elasticmq
+    container_name: sqs
+    restart: on-failure:5
+    ports:
         - 9324:9324
         - 9325:9325
-      volumes:
+    volumes:
         - ./sqs/custom.conf:/opt/elasticmq.conf
         - ./sqs/data:/data
-      healthcheck:
+    healthcheck:
         test: wget -q -S -O - 127.0.0.1:9324/?Action=ListQueues || exit 1
         interval: 10s
         timeout: 5s
@@ -38,62 +38,72 @@ services:
     container_name: api
     pull_policy: build
     build:
-      context: .
-      dockerfile: backend/Dockerfile.api
-    ports:
-      - 8080:8080
+        context: .
+        dockerfile: backend/Dockerfile.api
+    # ports:
+    #     - 8080:8080
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-notifi}
-      POSTGRES_USER: ${POSTGRES_USER:-root}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      SQS_QUEUE_URL: ${SQS_QUEUE_URL:-http://sqs:9324}
-      SQS_QUEUE_REGION: ${SQS_QUEUE_REGION:-ap-southeast-2}
-      SQS_QUEUE_NAME: ${SQS_QUEUE_NAME:-notifi}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-x}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-x}
-      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-x}
-      TZ: Pacific/Auckland
+        POSTGRES_DB: ${POSTGRES_DB:-notifi}
+        POSTGRES_USER: ${POSTGRES_USER:-root}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+        POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+        POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+        SQS_QUEUE_URL: ${SQS_QUEUE_URL:-http://sqs:9324}
+        SQS_QUEUE_REGION: ${SQS_QUEUE_REGION:-ap-southeast-2}
+        SQS_QUEUE_NAME: ${SQS_QUEUE_NAME:-notifi}
+        AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-x}
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-x}
+        AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-x}
+        TZ: Pacific/Auckland
     depends_on:
-      postgres:
-          condition: service_healthy
-          restart: true
-      sqs:
-          condition: service_healthy
-          restart: true
+        postgres:
+            condition: service_healthy
+            restart: true
+        sqs:
+            condition: service_healthy
+            restart: true
     develop:
-      watch:
-        - path: ./backend
-          action: rebuild 
+        watch:
+            - path: ./backend
+              action: rebuild 
   
   message-delivery-worker:
     container_name: message-delivery-worker
     pull_policy: build
     build:
-      context: .
-      dockerfile: backend/Dockerfile.messagedeliveryworker
+        context: .
+        dockerfile: backend/Dockerfile.messagedeliveryworker
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-notifi}
-      POSTGRES_USER: ${POSTGRES_USER:-root}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
-      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
-      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
-      SQS_QUEUE_URL: ${SQS_QUEUE_URL:-http://sqs:9324}
-      SQS_QUEUE_REGION: ${SQS_QUEUE_REGION:-ap-southeast-2}
-      SQS_QUEUE_NAME: ${SQS_QUEUE_NAME:-notifi}
-      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-x}
-      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-x}
-      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-x}
-      TZ: Pacific/Auckland
+        POSTGRES_DB: ${POSTGRES_DB:-notifi}
+        POSTGRES_USER: ${POSTGRES_USER:-root}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-root}
+        POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+        POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+        SQS_QUEUE_URL: ${SQS_QUEUE_URL:-http://sqs:9324}
+        SQS_QUEUE_REGION: ${SQS_QUEUE_REGION:-ap-southeast-2}
+        SQS_QUEUE_NAME: ${SQS_QUEUE_NAME:-notifi}
+        AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-x}
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-x}
+        AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-x}
+        TZ: Pacific/Auckland
     depends_on:
-      postgres:
-          condition: service_healthy
-          restart: true
-      sqs:
-          condition: service_healthy
-          restart: true
+        postgres:
+            condition: service_healthy
+            restart: true
+        sqs:
+            condition: service_healthy
+            restart: true
     develop:
-      watch:
-        - path: ./backend
-          action: rebuild 
+        watch:
+            - path: ./backend
+              action: rebuild 
+
+  haproxy:
+    image: haproxy
+    container_name: haproxy
+    ports:
+        - 8080:80
+    volumes:
+        - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    depends_on:
+        - api
