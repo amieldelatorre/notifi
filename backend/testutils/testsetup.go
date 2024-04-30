@@ -29,9 +29,11 @@ func NewTestQueueProviderInstance() TestQueueProviderInstance {
 		panic(err)
 	}
 
+	const elasticmqPort = "9324/tcp"
+
 	req := testcontainers.ContainerRequest{
 		Image:        "softwaremill/elasticmq",
-		ExposedPorts: []string{"9324/tcp"},
+		ExposedPorts: []string{elasticmqPort},
 		Files: []testcontainers.ContainerFile{
 			{
 				Reader:            r,
@@ -50,8 +52,8 @@ func NewTestQueueProviderInstance() TestQueueProviderInstance {
 	if err != nil {
 		log.Fatalf("Could not start elasticmqContainer: %s", err)
 	}
-
-	endpoint, err := elasticmqContainer.Endpoint(ctx, "http")
+	// Use PortEndpoint instead of Endpoint to circumvent flaky test
+	endpoint, err := elasticmqContainer.PortEndpoint(ctx, elasticmqPort, "http")
 	if err != nil {
 		log.Fatalf("Could not get elasticmqContainer endpoint: %s", err)
 	}
