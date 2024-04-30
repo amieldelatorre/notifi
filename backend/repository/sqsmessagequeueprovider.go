@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log/slog"
@@ -113,4 +114,12 @@ func (p *SQSMessageQueueProvider) DeleteMessageFromQueue(id string) error {
 	}
 
 	return nil
+}
+
+func (p *SQSMessageQueueProvider) IsHealthy(ctx context.Context) bool {
+	input := sqs.GetQueueAttributesInput{
+		QueueUrl: &p.QueueUrl,
+	}
+	_, err := p.Client.GetQueueAttributes(&input)
+	return err == nil
 }

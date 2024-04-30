@@ -18,6 +18,7 @@ import (
 
 	AuthHandler "github.com/amieldelatorre/notifi/backend/handler/auth"
 	destinationHandler "github.com/amieldelatorre/notifi/backend/handler/destination"
+	healthHandler "github.com/amieldelatorre/notifi/backend/handler/health"
 	messageHandler "github.com/amieldelatorre/notifi/backend/handler/message"
 	userHandler "github.com/amieldelatorre/notifi/backend/handler/user"
 	"github.com/amieldelatorre/notifi/backend/repository"
@@ -34,6 +35,7 @@ type Application struct {
 	AuthHandler        AuthHandler.AuthHandler
 	MessageHandler     messageHandler.MessageHandler
 	DestinationHandler destinationHandler.DestinationHandler
+	HealthHandler      healthHandler.HealthHandler
 	Logger             *slog.Logger
 	Server             *http.Server
 }
@@ -54,6 +56,7 @@ func NewApp() Application {
 	// TODO: Get signing key from environment variable
 	signingKey := []byte("super_secret_signing_key")
 
+	healthProvider := repository.NewHealthPostgresProvider(dbPool)
 	usrProvider := repository.NewUserPostgresProvider(dbPool)
 	msgProvider := repository.NewMessagePostgresProvider(dbPool)
 	destProvider := repository.NewDestinationPostgresProvider(dbPool)
@@ -70,12 +73,14 @@ func NewApp() Application {
 	authHandler := AuthHandler.New(logger, AuthService.New(logger, usrProvider, jwtService), jwtService)
 	msgHandler := messageHandler.New(logger, msgService, jwtService)
 	destHandler := destinationHandler.New(logger, destService, jwtService)
+	hlthHandler := healthHandler.New(logger, &healthProvider, &queueProvider, jwtService)
 
 	mux := http.NewServeMux()
 	usrHandler.RegisterRoutes(mux)
 	authHandler.RegisterRoutes(mux)
 	msgHandler.RegisterRoutes(mux)
 	destHandler.RegisterRoutes(mux)
+	hlthHandler.RegisterRoutes(mux)
 
 	server := &http.Server{
 		Addr:    ":8080",
@@ -88,6 +93,7 @@ func NewApp() Application {
 		AuthHandler:        authHandler,
 		MessageHandler:     msgHandler,
 		DestinationHandler: destHandler,
+		HealthHandler:      hlthHandler,
 		Logger:             logger,
 		Server:             server,
 	}
