@@ -45,7 +45,7 @@ func TestPostDestination(t *testing.T) {
 		ExpectedStatusCode: http.StatusBadRequest,
 		ExpectedResponse: destinationService.Response{
 			Errors: map[string][]string{
-				"type":       {"Must be one of DISCORD"},
+				"type":       {"Must be one of DISCORD, MOBILE_ANDROID, MOBILE_IOS"},
 				"identifier": {"Cannot be empty"},
 			},
 		},
@@ -58,7 +58,7 @@ func TestPostDestination(t *testing.T) {
 			ExpectedStatusCode: http.StatusBadRequest,
 			ExpectedResponse: destinationService.Response{
 				Errors: map[string][]string{
-					"type": {"Must be one of DISCORD"},
+					"type": {"Must be one of DISCORD, MOBILE_ANDROID, MOBILE_IOS"},
 				},
 			},
 		},
@@ -79,7 +79,44 @@ func TestPostDestination(t *testing.T) {
 				},
 				Errors: map[string][]string{},
 			},
-		}}
+		},
+		{
+			DestinationInput: model.DestinationInput{
+				Type:       "MOBILE_ANDROID   ",
+				Identifier: "anidentifier",
+			},
+			ExpectedStatusCode: http.StatusCreated,
+			ExpectedResponse: destinationService.Response{
+				Destination: &model.Destination{
+					Id:              4,
+					UserId:          1,
+					Type:            "MOBILE_ANDROID",
+					Identifier:      "anidentifier",
+					DatetimeCreated: time.Now(),
+					DatetimeUpdated: time.Now(),
+				},
+				Errors: map[string][]string{},
+			},
+		},
+		{
+			DestinationInput: model.DestinationInput{
+				Type:       "MOBILE_IOS ",
+				Identifier: "anidentifier",
+			},
+			ExpectedStatusCode: http.StatusCreated,
+			ExpectedResponse: destinationService.Response{
+				Destination: &model.Destination{
+					Id:              5,
+					UserId:          1,
+					Type:            "MOBILE_IOS",
+					Identifier:      "anidentifier",
+					DatetimeCreated: time.Now(),
+					DatetimeUpdated: time.Now(),
+				},
+				Errors: map[string][]string{},
+			},
+		},
+	}
 
 	for tcn, tc := range tcs {
 		body, err := json.Marshal(tc.DestinationInput)

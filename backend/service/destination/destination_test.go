@@ -33,7 +33,7 @@ func TestCreateDestination(t *testing.T) {
 			ExpectedStatusCode: http.StatusBadRequest,
 			ExpectedResponse: Response{
 				Errors: map[string][]string{
-					"type":       {"Must be one of DISCORD"},
+					"type":       {"Must be one of DISCORD, MOBILE_ANDROID, MOBILE_IOS"},
 					"identifier": {"Cannot be empty"},
 				},
 			},
@@ -46,7 +46,7 @@ func TestCreateDestination(t *testing.T) {
 			ExpectedStatusCode: http.StatusBadRequest,
 			ExpectedResponse: Response{
 				Errors: map[string][]string{
-					"type": {"Must be one of DISCORD"},
+					"type": {"Must be one of DISCORD, MOBILE_ANDROID, MOBILE_IOS"},
 				},
 			},
 		},
@@ -61,6 +61,42 @@ func TestCreateDestination(t *testing.T) {
 					Id:              3,
 					UserId:          1,
 					Type:            "DISCORD",
+					Identifier:      "anidentifier",
+					DatetimeCreated: time.Now(),
+					DatetimeUpdated: time.Now(),
+				},
+				Errors: map[string][]string{},
+			},
+		},
+		{
+			DestinationInput: model.DestinationInput{
+				Type:       "MOBILE_ANDROID   ",
+				Identifier: "anidentifier",
+			},
+			ExpectedStatusCode: http.StatusCreated,
+			ExpectedResponse: Response{
+				Destination: &model.Destination{
+					Id:              4,
+					UserId:          1,
+					Type:            "MOBILE_ANDROID",
+					Identifier:      "anidentifier",
+					DatetimeCreated: time.Now(),
+					DatetimeUpdated: time.Now(),
+				},
+				Errors: map[string][]string{},
+			},
+		},
+		{
+			DestinationInput: model.DestinationInput{
+				Type:       "MOBILE_IOS ",
+				Identifier: "anidentifier",
+			},
+			ExpectedStatusCode: http.StatusCreated,
+			ExpectedResponse: Response{
+				Destination: &model.Destination{
+					Id:              5,
+					UserId:          1,
+					Type:            "MOBILE_IOS",
 					Identifier:      "anidentifier",
 					DatetimeCreated: time.Now(),
 					DatetimeUpdated: time.Now(),
