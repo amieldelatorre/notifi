@@ -9,10 +9,12 @@ import (
 type DestinationType string
 
 const (
-	DestinationTypeDiscord = "DISCORD"
+	DestinationTypeDiscord       = "DISCORD"
+	DestinationTypeMobileAndroid = "MOBILE_ANDROID"
+	DestinationTypeMobileIos     = "MOBILE_IOS"
 )
 
-var DestinationTypes = []DestinationType{DestinationTypeDiscord}
+var DestinationTypes = []DestinationType{DestinationTypeDiscord, DestinationTypeMobileAndroid, DestinationTypeMobileIos}
 
 func destinationTypesAsStringSlice() []string {
 	strings := []string{}
@@ -44,13 +46,7 @@ func (d *DestinationInput) Validate() (DestinationInput, map[string][]string) {
 		Identifier: strings.TrimSpace(d.Identifier),
 	}
 
-	userDestinationTypeValid := false
-	for _, validDestinationType := range DestinationTypes {
-		if cleanInput.Type == string(validDestinationType) {
-			userDestinationTypeValid = true
-			break
-		}
-	}
+	userDestinationTypeValid := validDestinationType(cleanInput.Type)
 	if !userDestinationTypeValid {
 		validationErrors["type"] = append(validationErrors["type"], fmt.Sprintf("Must be one of %s", strings.Join(destinationTypesAsStringSlice(), ", ")))
 	}
@@ -60,4 +56,13 @@ func (d *DestinationInput) Validate() (DestinationInput, map[string][]string) {
 	}
 
 	return cleanInput, validationErrors
+}
+
+func validDestinationType(destinationType string) bool {
+	switch destinationType {
+	case DestinationTypeDiscord, DestinationTypeMobileIos, DestinationTypeMobileAndroid:
+		return true
+	default:
+		return false
+	}
 }

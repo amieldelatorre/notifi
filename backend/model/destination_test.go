@@ -34,7 +34,7 @@ func GetDestinationInputTestCases() []DestinationInputTestCase {
 				Identifier: "",
 			},
 			ExpectedResponseErrors: map[string][]string{
-				"type":       {"Must be one of DISCORD"},
+				"type":       {"Must be one of DISCORD, MOBILE_ANDROID, MOBILE_IOS"},
 				"identifier": {"Cannot be empty"},
 			},
 			ExpectedCleanInput: DestinationInput{
@@ -48,7 +48,7 @@ func GetDestinationInputTestCases() []DestinationInputTestCase {
 				Identifier: "anidentifier",
 			},
 			ExpectedResponseErrors: map[string][]string{
-				"type": {"Must be one of DISCORD"},
+				"type": {"Must be one of DISCORD, MOBILE_ANDROID, MOBILE_IOS"},
 			},
 			ExpectedCleanInput: DestinationInput{
 				Type:       "X",
@@ -85,6 +85,28 @@ func GetDestinationInputTestCases() []DestinationInputTestCase {
 			ExpectedResponseErrors: map[string][]string{},
 			ExpectedCleanInput: DestinationInput{
 				Type:       "DISCORD",
+				Identifier: "anidentifier",
+			},
+		},
+		{
+			DestinationInput: DestinationInput{
+				Type:       "MOBILE_ANDROID   ",
+				Identifier: "anidentifier",
+			},
+			ExpectedResponseErrors: map[string][]string{},
+			ExpectedCleanInput: DestinationInput{
+				Type:       "MOBILE_ANDROID",
+				Identifier: "anidentifier",
+			},
+		},
+		{
+			DestinationInput: DestinationInput{
+				Type:       "MOBILE_IOS",
+				Identifier: "anidentifier",
+			},
+			ExpectedResponseErrors: map[string][]string{},
+			ExpectedCleanInput: DestinationInput{
+				Type:       "MOBILE_IOS",
 				Identifier: "anidentifier",
 			},
 		},
